@@ -1,0 +1,148 @@
+# Mechanics kit: scene recipes that experiment specs may reference.
+# `runtime` names the Bench apparatus family in benchmark/core that builds the recipe.
+# `controls` are apparatus control tools added to the common control set;
+# `instruments` are the instrument tool groups an experiment can declare.
+# `public_constants` are published device facts; the Bench seals the values it
+# actually built into the episode record, and the evaluator uses those.
+kit: mechanics
+recipes:
+  airtrack_bench:
+    runtime: airtrack
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # catches, launcher knob, release lever and recorder keys are operated by hand
+    instruments:
+      airtrack_recorder: {tools: [export_recording], evidence: "<episode>:collision:<n>"}
+    public_constants:
+      mass_A_kg: 0.200
+      launcher: {notches: [1, 2, 3]}
+      gates: {beam_spacing_m: 0.020, time_resolution_ms: 0.01}
+      recorder: {record_s_range: [5, 60]}
+  hooke_bench:
+    runtime: hooke
+    layout_jitter_supported: true         # benchmark/core/layout.py: whole bench incl. the weight box; ruler kept in the views that see it
+    params:
+      n_weights: {type: int, min: 3, max: 5}
+      tray_top: {enum: [open5]}
+      encoder: {enum: [false, true]}     # frame-mounted tray encoder (hooke_dynamic_k)
+    controls: []
+    instruments:
+      ruler_image: {tools: [get_observation], evidence: "<episode>:obs:<n>"}
+      tray_encoder: {tools: [arm_encoder, read_encoder, export_encoder, set_damping_brake], evidence: "<episode>:encoder:<n>", constants: [encoder]}   # frame encoder with its tray damping brake; `encoder` constants only where it is used
+    public_constants:
+      weight_mass_kg: 0.050
+      tray_mass_kg: 0.080                 # built tray body (hooke_physics.HANGER_MASS_KG)
+      gravity_for_conversion_m_s2: 9.81
+      ruler_unit: cm
+      full_load_travel_max_m: 0.15
+      encoder: {sample_hz: 120, resolution_mm: 0.1, range_mm: [-100, 100], zero_below_start_mm: 75, arm_s: [10, 120]}
+  hooke_encoder_bench:                    # hooke_dynamic_k: the Hooke bench with the tray encoder, its recorder panel and the damper lever
+    runtime: hooke
+    layout_jitter_supported: true         # benchmark/core/layout.py: whole bench incl. the weight box, the panel and the lever
+    params:
+      n_weights: {type: int, min: 3, max: 5}
+      tray_top: {enum: [open5]}
+      encoder: {enum: [true]}
+    controls: []                          # recorder keypad and damper lever are operated by hand, not by tool calls
+    instruments:
+      tray_encoder: {tools: [export_encoder], evidence: "<episode>:encoder:<n>", constants: [encoder]}   # recordings keyed with REC on the recorder panel
+    public_constants:
+      weight_mass_kg: 0.050
+      tray_mass_kg: 0.080                 # built tray body (hooke_physics.HANGER_MASS_KG)
+      gravity_for_conversion_m_s2: 9.81
+      full_load_travel_max_m: 0.15
+      encoder: {sample_hz: 120, resolution_mm: 0.1, range_mm: [-100, 100], zero_below_start_mm: 75, record_s: [10, 120]}
+  pendulum_bench:
+    runtime: pendulum
+    layout_jitter_supported: true         # pendula, gates, timers and their buttons move together
+    params:
+      pendulums: {subset_of: [P1, P2, P3]}
+      gate_mode: {enum: [per_pendulum]}
+      g_public: {enum: [null]}
+    controls: []                          # no probe: the robot touches the pendula directly
+    instruments:
+      optical_gate: {tools: [], evidence: "<episode>:obs:<n>"}   # started and reset by its physical START/RESET buttons; read on its face in the camera images (no export_gate)
+    public_constants:
+      effective_lengths_m: {P1: 0.2499, P2: 0.3497, P3: 0.4495}
+      gate_cycles: 10                     # fixed: one warm-up cycle, then 10 timed complete cycles
+      warmup_cycles: 1
+  torsion_bench:
+    runtime: torsion
+    layout_jitter_supported: true         # benchmark/core/layout.py: turntable, photogate, panel, lever, box and objects move together
+    params:
+      objects: {subset_of: [standard_disc, unknown_object]}
+    controls: []                          # the recorder keypad (REC starts a record) and the damper lever are operated by hand
+    instruments:
+      torsion_photogate: {tools: [export_photogate], evidence: "<episode>:photogate:<n>"}   # rim-flag photogate with its recorder panel
+    public_constants:
+      standard_disc: {mass_kg: 0.40, moment_of_inertia_kgm2: 0.00032}
+      unknown_object: {mass_kg: 0.35}
+      photogate: {time_resolution_s: 0.0001, record_s: [10, 120]}
+      storage_box: {seat_dxy_m: 0.02, seat_dz_m: 0.02, seat_tilt_deg: 10}
+  coupled_bench:
+    runtime: coupled
+    layout_jitter_supported: false        # rail axis and forces are world-X based; not jittered
+    params:
+      logger_arms: {enum: [null]}
+    controls: []                          # catches, CLAMP buttons, keypad and damper lever are operated by hand
+    instruments:
+      coupled_recorder: {tools: [export_recording], evidence: "<episode>:encoder:<n>"}
+    public_constants:
+      slider_mass_kg: 0.20
+      recorder: {sample_hz: 120, resolution_mm: 0.1, range_mm: [-100, 100], record_s: [40, 180]}
+  torsion_centroid_bench:
+    runtime: torsion_centroid
+    layout_jitter_supported: true
+    params: {}
+    controls: []
+    instruments:
+      centroid_photogate: {tools: [export_photogate], evidence: "<episode>:photogate:<n>"}   # rim-flag photogate with its recorder panel
+    public_constants:
+      standard_disc: {mass_kg: 0.40, moment_of_inertia_kgm2: 0.00032}
+      unknown_object: {mass_kg: 0.35, transverse_com_m: 0.0}
+      photogate: {time_resolution_s: 0.0001, record_s: [10, 120]}
+      storage_box: {seat_dxy_m: 0.02, seat_dz_m: 0.02, seat_tilt_deg: 10}
+  incline_bench:
+    runtime: friction
+    layout_jitter_supported: false        # the ramp, console and pads are one fixed bench
+    params: {}
+    controls: []
+    instruments:
+      incline_recorder: {tools: [export_recording], evidence: "<episode>:incline:<n>"}   # keypad-operated
+    public_constants:
+      gravity_m_s2: 9.81
+      ramp: {max_angle_deg: 35, tilt_rate_deg_s: 0.5}
+      slider: {mass_kg: 0.25}     # each of the two sliders A and B
+      recorder: {angle_resolution_deg: 0.01, position_resolution_m: 0.0001, sample_hz: 240, record_s: [5, 120]}
+  projectile_bench:
+    runtime: projectile
+    layout_jitter_supported: false
+    params: {}
+    controls: []
+    instruments:
+      flight_recorder: {tools: [export_flight], evidence: "<episode>:flight:<n>"}
+    public_constants:
+      ball_mass_kg: 0.025
+      plunger_mass_kg: 0.040
+      launch_tilt_deg: 10
+      notches_m: [0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.045, 0.050]
+      time_resolution_s: 0.00001
+      distance_resolution_m: 0.0001
+  beam_bench:
+    runtime: beam
+    layout_jitter_supported: false
+    params:
+      weight_seats: {type: object}
+      weights_g: {type: object}           # private: each weight's mass by its object id
+      seats_mm: {type: object}            # private: saddle stations (printed on the bench beside each saddle)
+      holes_mm: {type: array}             # private: the rail's detent holes (printed beside each hole)
+      carriage_hole_mm: {type: number}    # private: the hole the indicator carriage starts on
+    controls: []                          # weights are set with the arm; the carriage is pushed, ZERO pressed by hand
+    instruments:
+      digital_indicator: {tools: [], evidence: "<episode>:obs:<n>"}     # read on its LCD in the camera images
+    public_constants:
+      weights_g: [50, 100, 100]           # the masses on the weights' labels, unnamed
+      gauge: {resolution_mm: 0.001, refresh_hz: 10}
+      carriage: {detent_n: 6, friction_n: 2}
+      g_m_s2: 9.81
+      buttons: {travel_mm: 9, switch_mm: 4}

@@ -1,0 +1,40 @@
+id: lens_focal
+version: 1
+tier: basic
+kit: optics
+title: "Focal length of a converging lens"
+task_card: task_card.md
+scene:
+  recipe: optics_hand_lens
+  params: {lenses: [L], lens_axes: [A], screen_axis: S, initial_mm: {A: 300, S: 640}, lens_seats: {L: "carriage:A"},
+           source: object, drive: hand}
+
+hidden:
+  f_L_mm: {dist: uniform, low: 80, high: 150}
+  offset_L_mm: {dist: uniform, low: -5, high: 5}
+constraints: []
+
+instruments:
+  - bench_view
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 500, wall_s: 14400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: f_mm, unit: "mm"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - optics_readings_genuine: {position_tol_mm: 1.0}
+  - optics_measurement_valid: {max_blur_mm: 1.0}
+  - bench_in_order
+  - optics_bench_restored
+scoring:
+  metric: rel_error
+  target: f_L_mm
+  threshold: 0.01
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

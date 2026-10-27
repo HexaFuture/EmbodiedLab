@@ -1,0 +1,39 @@
+id: slit_width
+version: 1
+tier: basic
+kit: optics
+title: "Slit width from single-slit diffraction"
+task_card: task_card.md
+scene:
+  recipe: optics_hand_slit
+  params: {lenses: [SL], element_kinds: {SL: slit}, lens_axes: [A], screen_axis: S, initial_mm: {A: 100, S: 400},
+           lens_seats: {SL: "carriage:A"}, source: laser, drive: hand}
+
+hidden:
+  slit_width_mm: {dist: uniform, low: 0.04, high: 0.12}
+  offset_SL_mm: {dist: uniform, low: -2, high: 2}
+constraints: []
+
+instruments: [bench_view]
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 350, wall_s: 14400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: slit_width_mm, unit: "mm"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - optics_readings_genuine: {position_tol_mm: 1.0, spot_tol_mm: 0.5}
+  - optics_measurement_valid
+  - bench_in_order
+  - optics_bench_restored
+scoring:
+  metric: rel_error
+  target: slit_width_mm
+  threshold: 0.01
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

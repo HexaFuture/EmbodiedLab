@@ -1,0 +1,50 @@
+id: kinetics_crystal_violet
+version: 1
+tier: advanced
+kit: chemistry
+title: "Kinetics: reaction orders and rate constant of crystal violet fading"
+task_card: task_card.md
+scene:
+  recipe: chem_spectro_kin_bench
+  params: {n_cuvettes: 9, stock_mL: 30, water_mL: 60, naoh_mL: 30, dye: crystal_violet}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  k_M_s: {dist: uniform, low: 0.15, high: 0.30}
+  eps_factor: {dist: uniform, low: 0.95, high: 1.05}
+  c_stock_draw: {dist: uniform, low: 30, high: 80}
+  c_stock_uM: {dist: derived, expr: "round(c_stock_draw, 1)", public: true}
+  lambda_max_nm: {dist: derived, expr: "dye_lambda_max('crystal_violet')", public: true}
+  naoh_cert_factor: {dist: uniform, low: 0.998, high: 1.002}
+  b0: {dist: uniform, low: 0.02, high: 0.06}
+  b1: {dist: uniform, low: -0.01, high: 0.01}
+  stray_light: {dist: uniform, low: 0.0001, high: 0.001}
+constraints: []
+
+instruments:
+  - spectrophotometer
+affordances: [grasp, place, press]
+consumables: {cuvettes: 9, stock_mL: 30, water_mL: 60, naoh_mL: 30}
+budget: {sim_s: 800, wall_s: 21600, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: k, unit: "M^(1-m-n) s^-1 (m = order_CV, n = order_OH)"}
+
+gates:
+  - spectro_readings_genuine: {composition_tol: 0.01}
+  - spectro_measurement_valid
+  - kinetic_records_valid: {oh_margin_pct: 20}
+  - kinetic_orders_correct
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - chem_bench_restored
+scoring:
+  metric: rel_error
+  field: k
+  target: k_M_s
+  threshold: 0.02
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

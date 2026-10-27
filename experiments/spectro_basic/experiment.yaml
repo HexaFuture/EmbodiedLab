@@ -1,0 +1,50 @@
+id: spectro_basic
+version: 1
+tier: advanced
+kit: chemistry
+title: "Spectrophotometry: concentration of an unknown dye"
+task_card: task_card.md
+scene:
+  recipe: chem_spectro_bench
+  params: {n_cuvettes: 9, stock_mL: 30, water_mL: 60, unknown_mL: 10, dye: "{hidden.dye}"}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  dye: {dist: choice, values: [tartrazine, allura_red, crystal_violet, brilliant_blue_fcf]}
+  eps_factor: {dist: uniform, low: 0.95, high: 1.05}
+  c_stock_draw: {dist: uniform, low: 20, high: 100}
+  c_stock_uM: {dist: derived, expr: "round(c_stock_draw, 1)", public: true}
+  lambda_max_nm: {dist: derived, expr: "dye_lambda_max(dye)", public: true}
+  A_stock: {dist: derived, expr: "dye_eps(dye, lambda_max_nm) * eps_factor * c_stock_uM * 1e-6"}
+  A_u: {dist: uniform, low: 0.3, high: 1.2}
+  c_u_uM: {dist: derived, expr: "A_u / (dye_eps(dye, lambda_max_nm) * eps_factor) * 1e6"}
+  b0: {dist: uniform, low: 0.02, high: 0.06}
+  b1: {dist: uniform, low: -0.01, high: 0.01}
+  stray_light: {dist: uniform, low: 0.0001, high: 0.001}
+constraints:
+  - "A_stock >= 1.5 and A_stock <= 7.0"
+
+instruments:
+  - spectrophotometer
+affordances: [grasp, place, press]
+consumables: {cuvettes: 9, stock_mL: 30, water_mL: 60, unknown_mL: 10}
+budget: {sim_s: 770, wall_s: 14400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: concentration_uM, unit: "uM"}
+
+gates:
+  - spectro_readings_genuine: {composition_tol: 0.01}
+  - spectro_measurement_valid
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - chem_bench_restored
+scoring:
+  metric: rel_error
+  target: c_u_uM
+  threshold: 0.02
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

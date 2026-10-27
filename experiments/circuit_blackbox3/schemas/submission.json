@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/circuit_blackbox3/submission.json",
+  "title": "circuit_blackbox3 submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "topology",
+    "parameters",
+    "measurements",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "topology": {
+      "type": "string",
+      "minLength": 1,
+      "description": "the Name of one candidate network in the task card's table"
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "measurements": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "readings",
+          "used_in_fit"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "t0_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "t1_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "readings": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "enum": [
+                "V1",
+                "V2",
+                "A",
+                "CH1",
+                "CH2"
+              ]
+            },
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "used_in_fit": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "topology": {
+            "const": "T1"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parameters": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "R1_ohm",
+              "R2_ohm"
+            ],
+            "properties": {
+              "R1_ohm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "R2_ohm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "topology": {
+            "const": "T2"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parameters": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "R1_ohm",
+              "C1_F"
+            ],
+            "properties": {
+              "R1_ohm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "C1_F": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "topology": {
+            "const": "T4"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parameters": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "R1_ohm",
+              "R2_ohm",
+              "C1_F"
+            ],
+            "properties": {
+              "R1_ohm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "R2_ohm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "C1_F": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "examples": [{
+    "topology": "<one of T1|T2|T4>",
+    "parameters": {"<each required parameter of that topology>": "<its value in ohm or farad, a number>"},
+    "measurements": [
+      {"evidence_id": "<episode_id>:logger:<n>", "t0_s": "<window start in s, a number>", "t1_s": "<window end in s, a number>", "readings": {"CH1": "<reading in V, a number>", "CH2": "<reading in V, a number>"}, "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "readings": {"V1": "<reading in V, a number>"}, "used_in_fit": false}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

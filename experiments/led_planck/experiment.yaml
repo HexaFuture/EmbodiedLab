@@ -1,0 +1,58 @@
+id: led_planck
+version: 1
+tier: basic
+kit: circuits
+title: "The wavelength of an unknown LED"
+task_card: task_card.md
+scene:
+  recipe: circuit_grid_led
+  params: {}
+
+hidden:
+  lambda_x_nm: {dist: uniform, low: 490, high: 620}
+  delta_eV: {dist: uniform, low: 0.05, high: 0.20}
+  eps_L1_eV: {dist: uniform, low: -0.015, high: 0.015}
+  eps_L2_eV: {dist: uniform, low: -0.015, high: 0.015}
+  eps_L3_eV: {dist: uniform, low: -0.015, high: 0.015}
+  eps_L4_eV: {dist: uniform, low: -0.015, high: 0.015}
+  eps_X_eV: {dist: uniform, low: -0.015, high: 0.015}
+  n_L1: {dist: uniform, low: 1.9, high: 2.3}
+  n_L2: {dist: uniform, low: 1.9, high: 2.3}
+  n_L3: {dist: uniform, low: 1.9, high: 2.3}
+  n_L4: {dist: uniform, low: 1.9, high: 2.3}
+  n_X: {dist: uniform, low: 1.9, high: 2.3}
+  r_L1_ohm: {dist: uniform, low: 6, high: 14}
+  r_L2_ohm: {dist: uniform, low: 6, high: 14}
+  r_L3_ohm: {dist: uniform, low: 6, high: 14}
+  r_L4_ohm: {dist: uniform, low: 6, high: 14}
+  r_X_ohm: {dist: uniform, low: 6, high: 14}
+  rs_factor_100: {dist: uniform, low: 0.999, high: 1.001}
+  rs_factor_330: {dist: uniform, low: 0.999, high: 1.001}
+  rs_factor_1k: {dist: uniform, low: 0.999, high: 1.001}
+constraints: []
+
+instruments:
+  - circuit_grid_logger
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 500, wall_s: 21000, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: lambda_x_nm, unit: "nm"}
+
+gates:
+  - readings_genuine: {counts: 2, logger_mV: 2}
+  - grid_measurement_valid: {i_min_uA: 1, steady_s: 0.2}
+  - led_x_measured: {conduct_mA: 0.5}
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - circuit_bench_restored
+scoring:
+  metric: rel_error
+  target: lambda_x_nm
+  threshold: 0.02
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

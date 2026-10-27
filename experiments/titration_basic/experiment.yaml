@@ -1,0 +1,45 @@
+id: titration_basic
+version: 1
+tier: advanced
+kit: chemistry
+title: "Acid-base titration: concentration of hydrochloric acid"
+task_card: task_card.md
+scene:
+  recipe: chem_titration_bench
+  params: {naoh_mL: 60, n_sample_beakers: 3, sample_mL: 10, sample_acid: HCl}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  c_HCl_M: {dist: uniform, low: 0.05, high: 0.15}
+  naoh_cert_factor: {dist: uniform, low: 0.998, high: 1.002}
+  V_S1_mL: {dist: uniform, low: 9.98, high: 10.02}
+  V_S2_mL: {dist: uniform, low: 9.98, high: 10.02}
+  V_S3_mL: {dist: uniform, low: 9.98, high: 10.02}
+  ph_offset: {dist: uniform, low: -0.2, high: 0.2}
+  ph_slope_frac: {dist: uniform, low: 0.97, high: 1.0}
+constraints: []
+
+instruments:
+  - titration
+affordances: [grasp, place, press]
+consumables: {naoh_mL: 60, sample_beakers: 3}
+budget: {sim_s: 600, wall_s: 19200, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: c_HCl_M, unit: "M"}
+
+gates:
+  - titration_readings_genuine
+  - titration_measurement_valid
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - chem_bench_restored
+scoring:
+  metric: rel_error
+  target: c_HCl_M
+  threshold: 0.005
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

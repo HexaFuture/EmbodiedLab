@@ -1,0 +1,45 @@
+id: optical_relay
+version: 1
+tier: advanced
+kit: optics
+title: "Two-lens relay: an upright real image at a set magnification"
+task_card: task_card.md
+scene:
+  recipe: optics_hand_relay
+  params: {lenses: [L1, L2], element_kinds: {L1: lens, L2: lens}, lens_axes: [A, B], screen_axis: S,
+           initial_mm: {A: 100, B: 200, S: 450}, lens_seats: {L1: "stand:1", L2: "stand:2"}, source: object,
+           drive: hand}
+
+hidden:
+  f_L1_mm: {dist: uniform, low: 45, high: 75}
+  f_L2_mm: {dist: uniform, low: 45, high: 75}
+  offset_L1_mm: {dist: uniform, low: -3, high: 3}
+  offset_L2_mm: {dist: uniform, low: -3, high: 3}
+  target_choice: {dist: choice, values: [0, 1]}
+  magnification: {dist: derived, expr: "[1.0, 1.5][target_choice]", public: true}
+constraints: []
+
+instruments: [bench_view]
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 1500, wall_s: 28800, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: magnification_measured, unit: "1"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - optics_readings_genuine: {position_tol_mm: 1.0}
+  - optics_measurement_valid: {max_blur_mm: 0.25}
+  - bench_in_order
+  - optics_bench_restored
+scoring:
+  metric: sealed_rel_error
+  target: magnification
+  field: evidence_id
+  threshold: 0.03
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

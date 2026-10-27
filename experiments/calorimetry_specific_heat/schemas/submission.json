@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/calorimetry_specific_heat/submission.json",
+  "title": "calorimetry_specific_heat submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["c_s_J_kgK", "readings", "T_sample_C", "T_water0_C", "T_final_C", "model", "uncertainty_statement"],
+  "$defs": {
+    "reading": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_id", "t_from_s", "t_to_s", "T_C"],
+      "properties": {
+        "record_id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "t_from_s": {"type": "number", "minimum": 0},
+        "t_to_s": {"type": "number", "minimum": 0},
+        "T_C": {"type": "number"},
+        "method": {"type": "string", "maxLength": 400}
+      }
+    }
+  },
+  "properties": {
+    "c_s_J_kgK": {"type": "number", "exclusiveMinimum": 0},
+    "readings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["heater", "water_before", "water_after"],
+      "properties": {
+        "heater": {"$ref": "#/$defs/reading"},
+        "water_before": {"$ref": "#/$defs/reading"},
+        "water_after": {"$ref": "#/$defs/reading"}
+      }
+    },
+    "T_sample_C": {"type": "number"},
+    "T_water0_C": {"type": "number"},
+    "T_final_C": {"type": "number"},
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "c_s_J_kgK": "<c_s in J/(kg K), a number>",
+    "readings": {"heater": {"record_id": "<episode_id>:thermo_rec:<n>", "t_from_s": "<start time in s, a number>", "t_to_s": "<end time in s, a number>", "T_C": "<temperature in °C, a number>", "method": "<how you obtained this value from the cited data>"}, "water_before": {"record_id": "<episode_id>:thermo_rec:<n>", "t_from_s": "<start time in s, a number>", "t_to_s": "<end time in s, a number>", "T_C": "<temperature in °C, a number>"}, "water_after": {"record_id": "<episode_id>:thermo_rec:<n>", "t_from_s": "<start time in s, a number>", "t_to_s": "<end time in s, a number>", "T_C": "<temperature in °C, a number>"}},
+    "T_sample_C": "<T_sample in °C, a number>",
+    "T_water0_C": "<T_water0 in °C, a number>",
+    "T_final_C": "<T_final in °C, a number>",
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

@@ -1,0 +1,71 @@
+id: spectro_mixture
+version: 1
+tier: advanced
+kit: chemistry
+title: "Spectrophotometry: both concentrations in a two-dye mixture"
+task_card: task_card.md
+scene:
+  recipe: chem_spectro_scan_bench
+  params: {n_cuvettes: 9, stock_x_mL: 30, water_mL: 60, stock_y_mL: 30, mixture_mL: 3.0, mixture_cuvette: 9,
+           dye_x: "{hidden.dye_x}", dye_y: "{hidden.dye_y}"}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  pair: {dist: choice, values: [0, 1, 2]}
+  x_first: {dist: choice, values: [0, 1]}
+  dye_a: {dist: derived, expr: "['tartrazine', 'allura_red', 'crystal_violet'][pair]"}
+  dye_b: {dist: derived, expr: "['allura_red', 'crystal_violet', 'brilliant_blue_fcf'][pair]"}
+  dye_x: {dist: derived, expr: "dye_a if x_first == 1 else dye_b"}
+  dye_y: {dist: derived, expr: "dye_b if x_first == 1 else dye_a"}
+  lambda_x_nm: {dist: derived, expr: "dye_lambda_max(dye_x)"}
+  lambda_y_nm: {dist: derived, expr: "dye_lambda_max(dye_y)"}
+  eps_factor_x: {dist: uniform, low: 0.95, high: 1.05}
+  eps_factor_y: {dist: uniform, low: 0.95, high: 1.05}
+  k_xx: {dist: derived, expr: "dye_eps(dye_x, lambda_x_nm) * eps_factor_x * 1e-6"}
+  k_xy: {dist: derived, expr: "dye_eps(dye_x, lambda_y_nm) * eps_factor_x * 1e-6"}
+  k_yx: {dist: derived, expr: "dye_eps(dye_y, lambda_x_nm) * eps_factor_y * 1e-6"}
+  k_yy: {dist: derived, expr: "dye_eps(dye_y, lambda_y_nm) * eps_factor_y * 1e-6"}
+  c_stock_x_draw: {dist: uniform, low: 40.0, high: 100.0}
+  c_stock_y_draw: {dist: uniform, low: 40.0, high: 100.0}
+  c_stock_x_uM: {dist: derived, expr: "round(c_stock_x_draw, 1)", public: true}
+  c_stock_y_uM: {dist: derived, expr: "round(c_stock_y_draw, 1)", public: true}
+  A_x_mix: {dist: uniform, low: 0.2, high: 0.8}
+  A_y_mix: {dist: uniform, low: 0.2, high: 0.8}
+  c_X_uM: {dist: derived, expr: "A_x_mix / k_xx"}
+  c_Y_uM: {dist: derived, expr: "A_y_mix / k_yy"}
+  diagonal_error: {dist: derived, expr: "max(k_yx * c_Y_uM / A_x_mix, k_xy * c_X_uM / A_y_mix)"}
+  b0: {dist: uniform, low: 0.02, high: 0.06}
+  b1: {dist: uniform, low: -0.01, high: 0.01}
+  stray_light: {dist: uniform, low: 0.0001, high: 0.001}
+constraints:
+  - "k_xx * c_stock_x_uM >= 0.9 and k_xx * c_stock_x_uM <= 14.5"
+  - "k_yy * c_stock_y_uM >= 0.9 and k_yy * c_stock_y_uM <= 14.5"
+  - "A_x_mix + k_yx * c_Y_uM <= 1.1"
+  - "A_y_mix + k_xy * c_X_uM <= 1.1"
+  - "diagonal_error >= 0.075"
+
+instruments:
+  - spectrophotometer
+affordances: [grasp, place, press]
+consumables: {cuvettes: 9, stock_x_mL: 30, water_mL: 60, stock_y_mL: 30, mixture_mL: 3.0}
+budget: {sim_s: 990, wall_s: 18000, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: concentration_X_uM, unit: "uM"}
+
+gates:
+  - spectro_readings_genuine: {composition_tol: 0.01}
+  - spectro_measurement_valid
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - chem_bench_restored
+scoring:
+  metric: max_rel_error
+  fields: [concentration_X_uM, concentration_Y_uM]
+  target: [c_X_uM, c_Y_uM]
+  threshold: 0.03
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

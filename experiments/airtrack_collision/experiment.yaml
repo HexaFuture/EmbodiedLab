@@ -1,0 +1,39 @@
+id: airtrack_collision
+version: 1
+tier: basic
+kit: mechanics
+title: "Air track: an unknown mass from a collision"
+task_card: task_card.md
+scene: {recipe: airtrack_bench, params: {}}
+hidden:
+  mass_B_kg: {dist: loguniform, low: 0.1, high: 0.4}
+  a_regime: {dist: choice, values: [1, -1]}
+  e_forward_max: {dist: derived, expr: "min(0.95, (0.2 - 0.151*(0.2 + mass_B_kg))/mass_B_kg)"}
+  e_back_min: {dist: derived, expr: "max(0.3, (0.2 + 0.151*(0.2 + mass_B_kg))/mass_B_kg)"}
+  a_rebounds: {dist: derived, expr: "1 if ((a_regime < 0 and e_back_min <= 0.95) or e_forward_max < 0.3) else 0"}
+  restitution: {dist: uniform, low: "e_back_min if a_rebounds > 0 else 0.3", high: "0.95 if a_rebounds > 0 else e_forward_max"}
+constraints:
+  - "abs(0.2 - restitution*mass_B_kg) >= 0.15*(0.2 + mass_B_kg)"
+instruments: [airtrack_recorder]
+affordances: [grip_and_translate, pull_release, push, press]
+consumables: {}
+
+budget: {sim_s: 300, wall_s: 16800, submissions: 1}
+submission:
+  schema: schemas/submission.json
+  primary: {field: mass_B_kg, unit: kg}
+gates:
+  - valid_submission
+  - measurement_evidence_valid: {instrument: airtrack_recorder, min_points: 1}
+  - submission_self_consistent: {refit: collision_momentum, tol: 0.005}
+  - released
+  - within_budget
+  - bench_in_order
+  - airtrack_bench_restored
+scoring:
+  metric: rel_error
+  target: mass_B_kg
+  field: mass_B_kg
+  threshold: 0.005
+  reward: "G * max(0, 1 - e)"
+hooks: {derive: null, evaluator_extra: null}

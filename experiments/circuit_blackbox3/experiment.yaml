@@ -1,0 +1,40 @@
+id: circuit_blackbox3
+version: 1
+tier: advanced
+kit: circuits
+title: "Circuit black box: identify its network and component values"
+task_card: task_card.md
+scene:
+  recipe: circuit_grid_network
+  params: {}
+hidden:
+  topology: {dist: choice, values: [T1, T2, T4]}
+  R1_ohm: {dist: loguniform, low: 2200, high: 47000}
+  R2_ohm: {dist: loguniform, low: 2200, high: 47000}
+  C1_F: {dist: loguniform, low: 22.0e-6, high: 220.0e-6}
+  rs_factor_1k: {dist: uniform, low: 0.999, high: 1.001}
+  rs_factor_10k: {dist: uniform, low: 0.999, high: 1.001}
+  rs_factor_100k: {dist: uniform, low: 0.999, high: 1.001}
+  supply_factor: {dist: uniform, low: 0.99, high: 1.01}
+constraints: []
+instruments: [circuit_grid_logger]
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 450, wall_s: 19800, submissions: 1}
+submission:
+  schema: schemas/submission.json
+  primary: {field: parameters, unit: "ohm|F"}
+gates:
+  - topology_correct
+  - readings_genuine: {counts: 2, logger_mV: 2}
+  - grid_measurement_valid: {i_min_uA: 1, steady_s: 0.0}
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - circuit_bench_restored: {max_capacitor_v: 0.1}
+scoring:
+  metric: max_rel_error
+  target: [R1_ohm, R2_ohm, C1_F]
+  threshold: 0.005
+  reward: "G * max(0, 1 - e)"
+hooks: {derive: null, evaluator_extra: null}

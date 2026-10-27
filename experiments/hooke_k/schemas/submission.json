@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/hooke_k/submission.json",
+  "title": "hooke_k submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["k_N_per_m", "unit", "model", "measurements", "uncertainty_statement"],
+  "properties": {
+    "k_N_per_m": {"type": "number", "exclusiveMinimum": 0},
+    "unit": {"const": "N/m"},
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "measurements": {
+      "type": "array", "minItems": 4, "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "mass_kg", "reading_cm", "used_in_fit"],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1, "maxLength": 200},
+          "mass_kg": {"type": "number", "minimum": 0},
+          "reading_cm": {"type": "number"},
+          "uncertainty_cm": {"type": "number", "exclusiveMinimum": 0},
+          "used_in_fit": {"type": "boolean"}
+        }
+      }
+    },
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "k_N_per_m": "<k in N/m, a number>",
+    "unit": "N/m",
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "measurements": [
+      {"evidence_id": "<episode_id>:obs:<n>", "mass_kg": "<mass in kg, a number>", "reading_cm": "<reading in cm, a number>", "uncertainty_cm": "<reading uncertainty in cm, a number>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "mass_kg": "<mass in kg, a number>", "reading_cm": "<reading in cm, a number>", "uncertainty_cm": "<reading uncertainty in cm, a number>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "mass_kg": "<mass in kg, a number>", "reading_cm": "<reading in cm, a number>", "uncertainty_cm": "<reading uncertainty in cm, a number>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "mass_kg": "<mass in kg, a number>", "reading_cm": "<reading in cm, a number>", "uncertainty_cm": "<reading uncertainty in cm, a number>", "used_in_fit": true}
+    ],
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

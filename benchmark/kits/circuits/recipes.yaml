@@ -1,0 +1,259 @@
+# Circuits kit: scene recipes that experiment specs may reference.
+# `runtime` names the Bench apparatus family in benchmark/core that builds the recipe
+# (circuit_apparatus + circuit_backend; electrical side circuit_solver, circuit_logger, circuit_bench).
+# `public_constants` are published device facts; the Bench seals the values it
+# actually built into the episode record, and the evaluator uses those.
+kit: circuits
+recipes:
+  circuit_bench:
+    runtime: circuit
+    layout_jitter_supported: true         # benchmark/core/layout.py: panel, sliders, black box and logger together
+    params:
+      box_kind: {enum: [single_c, single_r, network]}
+      topology: {enum: [single_c, single_r, T1, T2, T3, T4, T5, T6]}   # circuit_solver.TOPOLOGIES
+      initial_mode: {enum: ["OFF", random]}      # random: the MODE detent is drawn per instance like PAIR and RS
+    controls: []                          # sliders are moved by pushing their posts with the arm
+    instruments:
+      circuit_logger: {tools: [arm_logger, read_logger, export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      supply_v: 5.0
+      rs_nominal_ohm: [1000, 10000, 100000]
+      rs_tolerance: 0.001
+      selectors:
+        order: {pair: [A-B, B-C, A-C], rs: [1k, 10k, 100k], mode: [CHARGE, "OFF", DISCHARGE]}
+        detent_spacing_m: 0.030
+        polarity: "the first terminal of the selected pair is the plus terminal, connected to R_s"
+      logger:
+        channels: {CH1: "V(plus) - V(minus) of the selected pair", CH2: "voltage across R_s, positive while charging"}
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        arm_s: [2, 60]
+        max_arms: 20
+  led_bench:
+    runtime: circuit                      # the circuit panel with an LED board in place of the black box (led_planck)
+    layout_jitter_supported: true
+    params:
+      initial_mode: {enum: ["OFF"]}
+    controls: []                          # sliders are moved by pushing their posts with the arm
+    instruments:
+      circuit_logger: {tools: [arm_logger, read_logger, export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      supply_v: 5.0
+      sweep_v_per_s: 0.25
+      rs_nominal_ohm: [100, 330, 1000]
+      rs_tolerance: 0.001
+      leds: {L1: 470, L2: 525, L3: 590, L4: 630, X: null}
+      temperature_C: 25
+      selectors:
+        order: {led: [L1, L2, L3, L4, X], rs: ["100", "330", 1k], mode: [SWEEP, "OFF", "ON"]}
+        detent_spacing_m: 0.030
+      logger:
+        channels: {CH1: "voltage across the selected LED", CH2: "voltage across R_s (current x R_s)"}
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        arm_s: [2, 60]
+        max_arms: 20
+  battery_bench:
+    runtime: circuit                      # the circuit panel with a cell board in place of the black box (battery_emf)
+    layout_jitter_supported: true
+    params:
+      initial_mode: {enum: ["OFF"]}
+    controls: []                          # sliders are moved by pushing their posts with the arm
+    instruments:
+      circuit_logger: {tools: [arm_logger, read_logger, export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      load_nominal_ohm: [20, 10, 5, 3, 2]
+      load_tolerance: 0.02
+      shunt_nominal_ohm: [0.1, 0.5, 1.0]
+      shunt_tolerance: 0.001
+      selectors:
+        order: {load: ["20", "10", "5", "3", "2"], shunt: ["0.1", "0.5", "1.0"], switch: ["OFF", "ON"]}
+        detent_spacing_m: 0.030
+      logger:
+        channels: {CH1: "voltage across the cell's terminals", CH2: "voltage across the shunt (current x R_sh)"}
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        arm_s: [2, 60]
+        max_arms: 20
+  rectifier_bench:
+    runtime: rectifier
+    layout_jitter_supported: false
+    params: {}
+    controls: [set_load_resistance]
+    instruments:
+      scope: {tools: [read_instruments, start_recording, stop_recording, export_recording], evidence: "<episode>:rectifier-scope-<n>"}
+    public_constants:
+      objective: {mean_voltage_min_V: 8.5, ripple_pp_max_V: 0.8, final_load_ohm: 800}
+      circuit: {source_peak_V: 12, frequency_Hz: 50, source_resistance_ohm: 25, diode_n_low: 1.6, diode_n_high: 2.0, capacitance_tolerance_pct: 10}
+      apparatus: {detent_spacing_m: 0.03, discharge_resistor_ohm: 100}
+      load: {min_ohm: 150, max_ohm: 3300, setting_tolerance_pct: 2}
+      scope: {sample_hz: 12000, voltage_step_V: 0.002, current_step_A: 0.0001, max_record_seconds: 30, page_rows: 512}
+      submission_reserve_s: 1.3
+  circuit_grid_bench:
+    runtime: circuit_grid                 # benchmark/core/circuit_grid: board, blocks, tray, supply, black box, logger unit
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # blocks are placed by hand; the supply button, the switch rocker and the logger keys are pressed
+    instruments:
+      circuit_grid_logger: {tools: [export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      supply: {v_set: 5.0, v_tolerance: 0.01, current_limit_a: 0.1}
+      rs_nominal_ohm: [1000, 10000, 100000]
+      rs_tolerance: 0.001
+      seating: {pin_to_socket_m: 0.004, tilt_deg: 5.0, base_gap_m: 0.002, tray_xy_m: 0.02, tray_tilt_deg: 10.0}
+      supply_unit: {button_travel_m: 0.009, acts_at_m: 0.004, release_m: 0.002}
+      switch: {rocker_tilt_deg: 10.0, acts_past_level_deg: 2.0}
+      voltmeter: {input_ohm: 10000000, counts: 19999, conversion_s: 0.4, ranges: ["200 mV", "2 V", "20 V"], resolution: ["0.01 mV", "0.1 mV", "1 mV"]}
+      ammeter: {counts: 19999, conversion_s: 0.4, ranges: ["200 uA", "2 mA", "20 mA", "200 mA"], resolution: ["0.01 uA", "0.1 uA", "1 uA", "10 uA"], shunt_ohm: [1000, 100, 10, 1]}
+      autorange: {up_above_counts: 19999, down_below_counts: 1800}
+      logger:
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        record_s: [2, 60]
+        max_records: 20
+        display_refresh_s: 0.2
+  circuit_grid_battery:
+    runtime: circuit_grid                 # benchmark/core/circuit_grid/battery.py: board, cell, blocks, tray, logger unit (battery_emf)
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # blocks are placed by hand; the switch rocker and the logger keys are pressed
+    instruments:
+      circuit_grid_logger: {tools: [export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      cell: {printed_v: 1.5}
+      keys: {travel_m: 0.009, acts_at_m: 0.004}
+      load_nominal_ohm: [20, 10, 5, 3, 2]
+      load_tolerance: 0.02
+      shunt_nominal_ohm: [0.1, 0.5, 1.0]
+      shunt_tolerance: 0.001
+      seating: {pin_to_socket_m: 0.004, tilt_deg: 5.0, base_gap_m: 0.002, tray_xy_m: 0.02, tray_tilt_deg: 10.0}
+      voltmeter: {input_ohm: 10000000, counts: 19999, conversion_s: 0.4, ranges: ["200 mV", "2 V", "20 V"], resolution: ["0.01 mV", "0.1 mV", "1 mV"]}
+      ammeter: {counts: 19999, conversion_s: 0.4, ranges: ["200 uA", "2 mA", "20 mA", "200 mA"], resolution: ["0.01 uA", "0.1 uA", "1 uA", "10 uA"], shunt_ohm: [1000, 100, 10, 1]}
+      autorange: {up_above_counts: 19999, down_below_counts: 1800}
+      logger:
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        record_s: [2, 60]
+        max_records: 20
+        display_refresh_s: 0.2
+  circuit_grid_rc:
+    runtime: circuit_grid                 # benchmark/core/circuit_grid/rc.py: board, supply, capacitor box, blocks, changeover, tray, logger unit (rc_capacitance)
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # blocks are placed by hand; the supply button, the changeover lever and the logger keys are pressed
+    instruments:
+      circuit_grid_logger: {tools: [export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      supply: {v_set: 5.0, v_tolerance: 0.01, current_limit_a: 0.1}
+      rs_nominal_ohm: [1000, 10000, 100000]
+      rs_tolerance: 0.001
+      seating: {pin_to_socket_m: 0.004, tilt_deg: 5.0, base_gap_m: 0.002, tray_xy_m: 0.02, tray_tilt_deg: 10.0}
+      supply_unit: {button_travel_m: 0.009, acts_at_m: 0.004}
+      voltmeter: {input_ohm: 10000000, counts: 19999, conversion_s: 0.4, ranges: ["200 mV", "2 V", "20 V"], resolution: ["0.01 mV", "0.1 mV", "1 mV"]}
+      ammeter: {counts: 19999, conversion_s: 0.4, ranges: ["200 uA", "2 mA", "20 mA", "200 mA"], resolution: ["0.01 uA", "0.1 uA", "1 uA", "10 uA"], shunt_ohm: [1000, 100, 10, 1]}
+      autorange: {up_above_counts: 19999, down_below_counts: 1800}
+      logger:
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        record_s: [2, 60]
+        max_records: 20
+        display_refresh_s: 0.2
+  circuit_grid_network:
+    runtime: circuit_grid                 # benchmark/core/circuit_grid/network.py: board, supply, three-terminal box, blocks, switch, changeover, tray, logger unit (circuit_blackbox3)
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # blocks are placed by hand; the supply button, the switch rocker, the changeover lever and the logger keys are pressed
+    instruments:
+      circuit_grid_logger: {tools: [export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      supply: {v_set: 5.0, v_tolerance: 0.01, current_limit_a: 0.1}
+      rs_nominal_ohm: [1000, 10000, 100000]
+      rs_tolerance: 0.001
+      seating: {pin_to_socket_m: 0.004, tilt_deg: 5.0, base_gap_m: 0.002, tray_xy_m: 0.02, tray_tilt_deg: 10.0}
+      supply_unit: {button_travel_m: 0.009, acts_at_m: 0.004}
+      voltmeter: {input_ohm: 10000000, counts: 19999, conversion_s: 0.4, ranges: ["200 mV", "2 V", "20 V"], resolution: ["0.01 mV", "0.1 mV", "1 mV"]}
+      ammeter: {counts: 19999, conversion_s: 0.4, ranges: ["200 uA", "2 mA", "20 mA", "200 mA"], resolution: ["0.01 uA", "0.1 uA", "1 uA", "10 uA"], shunt_ohm: [1000, 100, 10, 1]}
+      autorange: {up_above_counts: 19999, down_below_counts: 1800}
+      logger:
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        record_s: [2, 60]
+        max_records: 20
+        display_refresh_s: 0.2
+  circuit_grid_led:
+    runtime: circuit_grid                 # benchmark/core/circuit_grid/led.py: board, supply, LED blocks, resistor blocks, tray, logger unit (led_planck)
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # blocks are placed by hand; the supply's ON/OFF and SWEEP keys and the logger keys are pressed
+    instruments:
+      circuit_grid_logger: {tools: [export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      supply: {v_set: 5.0, current_limit_a: 0.1, sweep_v_per_s: 0.25}
+      leds_nm: {L1: 470, L2: 525, L3: 590, L4: 630}
+      rs_nominal_ohm: [100, 330, 1000]
+      rs_tolerance: 0.001
+      temperature_C: 25
+      glow_ma: 0.5
+      seating: {pin_to_socket_m: 0.004, tilt_deg: 5.0, base_gap_m: 0.002, tray_xy_m: 0.02, tray_tilt_deg: 10.0}
+      supply_unit: {button_travel_m: 0.009, acts_at_m: 0.004}
+      voltmeter: {input_ohm: 10000000, counts: 19999, conversion_s: 0.4, ranges: ["200 mV", "2 V", "20 V"], resolution: ["0.01 mV", "0.1 mV", "1 mV"]}
+      ammeter: {counts: 19999, conversion_s: 0.4, ranges: ["200 uA", "2 mA", "20 mA", "200 mA"], resolution: ["0.01 uA", "0.1 uA", "1 uA", "10 uA"], shunt_ohm: [1000, 100, 10, 1]}
+      autorange: {up_above_counts: 19999, down_below_counts: 1800}
+      logger:
+        range_v: [-10.0, 10.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_hz: [30, 60, 120, 240]
+        record_s: [2, 60]
+        max_records: 20
+        display_refresh_s: 0.2
+  circuit_grid_rectifier:
+    runtime: circuit_grid                 # benchmark/core/circuit_grid/rectifier.py: board, AC source + bridge module, capacitor and load blocks, tray, kHz logger unit (rectifier_supply)
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # blocks are placed by hand; the module button and the logger keys are pressed
+    instruments:
+      circuit_grid_logger: {tools: [export_logger], evidence: "<episode>:logger:<n>"}
+    public_constants:
+      objective: {mean_voltage_min_V: 8.5, ripple_pp_max_V: 0.8, final_load_ohm: 820, final_load_tolerance_pct: 3}
+      circuit: {source_peak_V: 12, frequency_Hz: 50, source_resistance_ohm: 25, diode_is_A: 1.0e-8, diode_T_K: 298, diode_n_low: 1.6, diode_n_high: 2.0}
+      capacitors: {nominal_uF: [100, 220, 470], tolerance_pct: 10}
+      load_nominal_ohm: [150, 330, 470, 680, 820, 1000, 3300]
+      load_tolerance_pct: 1
+      seating: {pin_to_socket_m: 0.004, tilt_deg: 5.0, base_gap_m: 0.002, tray_xy_m: 0.02, tray_tilt_deg: 10.0}
+      supply_unit: {button_travel_m: 0.009, acts_at_m: 0.004}
+      voltmeter: {input_ohm: 10000000, counts: 19999, conversion_s: 0.4, ranges: ["200 mV", "2 V", "20 V"], resolution: ["0.01 mV", "0.1 mV", "1 mV"]}
+      ammeter: {counts: 19999, conversion_s: 0.4, ranges: ["200 uA", "2 mA", "20 mA", "200 mA"], resolution: ["0.01 uA", "0.1 uA", "1 uA", "10 uA"], shunt_ohm: [1000, 100, 10, 1]}
+      autorange: {up_above_counts: 19999, down_below_counts: 1800}
+      logger:
+        range_v: [-20.0, 20.0]
+        resolution_v: 0.001
+        noise_v: 0.0005
+        input_ohm: 10000000
+        rates_khz: [1, 2, 4, 8]
+        record_s: [1, 5]
+        max_records: 20
+        display_refresh_s: 0.2
+      integration_hz: 24000

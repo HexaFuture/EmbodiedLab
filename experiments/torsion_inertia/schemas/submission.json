@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/torsion_inertia/submission.json",
+  "title": "torsion_inertia submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["I_unknown_kgm2", "unit", "model", "measurements", "uncertainty_statement"],
+  "properties": {
+    "I_unknown_kgm2": {"type": "number", "exclusiveMinimum": 0},
+    "unit": {"const": "kg m^2"},
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "measurements": {
+      "type": "array", "minItems": 1, "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "load", "period_s", "used_in_fit"],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1, "maxLength": 200},
+          "load": {"enum": ["empty", "standard_disc", "unknown_object"]},
+          "period_s": {"type": "number", "exclusiveMinimum": 0},
+          "n_periods": {"type": "integer", "minimum": 1},
+          "used_in_fit": {"type": "boolean"}
+        }
+      }
+    },
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "I_unknown_kgm2": "<I_unknown in kg m^2, a number>",
+    "unit": "kg m^2",
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "measurements": [
+      {"evidence_id": "<episode_id>:photogate:<n>", "load": "empty", "period_s": "<period in s, a number>", "n_periods": "<number of periods, an integer>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:photogate:<n>", "load": "standard_disc", "period_s": "<period in s, a number>", "n_periods": "<number of periods, an integer>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:photogate:<n>", "load": "unknown_object", "period_s": "<period in s, a number>", "n_periods": "<number of periods, an integer>", "used_in_fit": true}
+    ],
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

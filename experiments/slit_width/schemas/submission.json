@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/slit_width/submission.json",
+  "title": "slit_width submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slit_width_mm", "measurements", "model", "uncertainty_statement"],
+  "properties": {
+    "slit_width_mm": {"type": "number", "exclusiveMinimum": 0},
+    "measurements": {
+      "type": "array", "minItems": 1, "maxItems": 60,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["evidence_id", "slit_mm", "screen_mm", "dark_fringes", "used_in_fit"],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1, "maxLength": 200},
+          "slit_mm": {"type": "number"},
+          "screen_mm": {"type": "number"},
+          "dark_fringes": {
+            "type": "array", "minItems": 2, "maxItems": 40,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["order", "x_mm"],
+              "properties": {
+                "order": {"type": "integer", "not": {"const": 0}},
+                "x_mm": {"type": "number"}
+              }
+            }
+          },
+          "used_in_fit": {"type": "boolean"}
+        }
+      }
+    },
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "slit_width_mm": "<slit width in mm, a number>",
+    "measurements": [
+      {"evidence_id": "<episode_id>:obs:<n>", "slit_mm": "<slit position in mm, a number>", "screen_mm": "<screen position in mm, a number>", "dark_fringes": [{"order": "<fringe order, an integer>", "x_mm": "<x in mm, a number>"}, {"order": "<fringe order, an integer>", "x_mm": "<x in mm, a number>"}, {"order": "<fringe order, an integer>", "x_mm": "<x in mm, a number>"}], "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "slit_mm": "<slit position in mm, a number>", "screen_mm": "<screen position in mm, a number>", "dark_fringes": [{"order": "<fringe order, an integer>", "x_mm": "<x in mm, a number>"}, {"order": "<fringe order, an integer>", "x_mm": "<x in mm, a number>"}, {"order": "<fringe order, an integer>", "x_mm": "<x in mm, a number>"}], "used_in_fit": false}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

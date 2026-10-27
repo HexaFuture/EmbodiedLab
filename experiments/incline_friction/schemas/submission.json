@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/incline_friction/submission.json",
+  "title": "incline_friction submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mu_s_A",
+    "mu_k_A",
+    "mu_s_B",
+    "mu_k_B",
+    "unit",
+    "static_evidence",
+    "kinetic_evidence",
+    "model",
+    "uncertainty_statement"
+  ],
+  "$defs": {
+    "cited_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "slider"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "slider": {
+          "enum": [
+            "A",
+            "B"
+          ]
+        }
+      }
+    }
+  },
+  "properties": {
+    "mu_s_A": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "mu_k_A": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "mu_s_B": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "mu_k_B": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "unit": {
+      "const": "1"
+    },
+    "static_evidence": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/cited_record"
+      }
+    },
+    "kinetic_evidence": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/cited_record"
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "mu_s_A": "<mu_s of slider A, a number>",
+    "mu_k_A": "<mu_k of slider A, a number>",
+    "mu_s_B": "<mu_s of slider B, a number>",
+    "mu_k_B": "<mu_k of slider B, a number>",
+    "unit": "1",
+    "static_evidence": [
+      {"evidence_id": "<episode_id>:incline:<n>", "slider": "A"},
+      {"evidence_id": "<episode_id>:incline:<n>", "slider": "B"}
+    ],
+    "kinetic_evidence": [
+      {"evidence_id": "<episode_id>:incline:<n>", "slider": "A"},
+      {"evidence_id": "<episode_id>:incline:<n>", "slider": "B"}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

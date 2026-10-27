@@ -1,0 +1,45 @@
+id: hooke_k
+version: 1
+tier: basic
+kit: mechanics
+title: "Spring stiffness (Hooke's law)"
+task_card: task_card.md
+
+scene:
+  recipe: hooke_bench
+  params: {n_weights: "{hidden.n_weights}", tray_top: open5, encoder: false}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  n_weights: {dist: choice, values: [4, 5], public: true}
+  k_N_per_m: {dist: loguniform, low: "3.27*n_weights", high: "9.81*n_weights"}
+  full_load_extension_m: {dist: derived, expr: "n_weights*0.050*9.81/k_N_per_m"}
+constraints:
+  - "full_load_extension_m >= 0.05 and full_load_extension_m <= 0.15"
+
+instruments:
+  - ruler_image
+affordances: [grasp, place]
+consumables: {}
+budget: {sim_s: 500, wall_s: 7200, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: k_N_per_m, unit: "N/m"}
+
+gates:
+  - weights_in_box
+  - released
+  - measurement_evidence_valid: {instrument: ruler_image, min_points: 4, min_loads: 4, require: [stable, no_contact, load_matches, distinct_loads]}
+  - submission_self_consistent: {refit: linear_hooke, tol: 0.05}
+  - valid_submission
+  - within_budget
+  - bench_in_order
+scoring:
+  metric: rel_error
+  target: k_N_per_m
+  threshold: 0.02
+  reward: "G * max(0, 1 - e)"
+  diagnostics: [reading_diagnostics, fit_r2]
+
+hooks: {derive: null, evaluator_extra: null}

@@ -1,0 +1,44 @@
+id: torsion_centroid
+version: 1
+tier: advanced
+kit: mechanics
+title: "Torsion pendulum: centre of mass and centroidal moment of inertia"
+task_card: task_card.md
+scene:
+  recipe: torsion_centroid_bench
+  params: {}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+hidden:
+  kappa_Nm_per_rad: {dist: loguniform, low: 0.004, high: 0.08}
+  I0_kgm2: {dist: uniform, low: 0.0010, high: 0.0020}
+  ballast_fraction: {dist: uniform, low: 0.2, high: 0.8}
+  imbalance: {dist: uniform, low: -0.6, high: 0.6}
+  ballast_halfspan_m: {dist: uniform, low: 0.025, high: 0.065}
+  x_com_m: {dist: derived, expr: "ballast_fraction*imbalance*ballast_halfspan_m"}
+  I_com_kgm2: {dist: derived, expr: "0.35*((1-ballast_fraction)*(0.160**2+0.060**2)/12 + ballast_fraction*((0.020**2+0.030**2)/12+ballast_halfspan_m**2) - x_com_m**2)"}
+constraints:
+  - "2*pi*sqrt(I0_kgm2/kappa_Nm_per_rad) >= 1.0"
+  - "2*pi*sqrt(I0_kgm2/kappa_Nm_per_rad) <= 3.0"
+instruments: [centroid_photogate]
+affordances: [grasp, place, push, press]
+consumables: {}
+budget: {sim_s: 550, wall_s: 25200, submissions: 1}
+submission:
+  schema: schemas/submission.json
+  primary: {field: I_com_kgm2, unit: "kg m^2"}
+gates:
+  - valid_submission
+  - within_budget
+  - centroid_measurement_valid: {min_cycles: 1, min_holes: 2, alternative_holes: 3}
+  - centroid_readings_genuine: {period_tol: 0.005}
+  - bench_in_order
+  - objects_in_box
+scoring:
+  metric: composite
+  target: [x_com_m, I_com_kgm2]
+  threshold: 1.0
+  components:
+    - {field: x_com_m, target: x_com_m, metric: abs_error, threshold: 0.0003}
+    - {field: I_com_kgm2, target: I_com_kgm2, metric: rel_error, threshold: 0.005}
+  reward: "G * max(0, 1 - e)"
+hooks: {derive: null, evaluator_extra: null}

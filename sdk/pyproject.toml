@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "embodiedlab-sdk"
+version = "0.1.0"
+description = "EmbodiedLab runtime: Controller, simulation Workers, the in-container environment daemon and the agent API"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = [
+  "cloudpickle>=3,<4",
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "packaging>=24,<27",
+  "pydantic>=2.7,<3",
+  "PyYAML>=6,<7",
+  "uvicorn>=0.30,<1",
+  "websockets>=15,<17",
+]
+
+[project.scripts]
+embodiedlab-controller = "embodiedlab_sdk.controller_main:main"
+embodiedlab-worker = "embodiedlab_sdk.worker:main"
+embodiedlab-envd = "embodiedlab_sdk.envd:main"
+embodiedlab-env-client = "embodiedlab_sdk.env_client:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+embodiedlab_sdk = ["data/*.json", "migrations/*.sql"]

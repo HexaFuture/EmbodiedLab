@@ -1,0 +1,187 @@
+# Optics kit: scene recipes that experiment specs may reference.
+# `runtime` names the Bench family in benchmark/core (optics_apparatus + optics_backend; optics side optics_bench,
+# optics_model). `public_constants` are published device facts.
+kit: optics
+recipes:
+  optics_rail_bench:
+    runtime: optics
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [object, laser]}
+      element_kinds: {type: object}
+    controls: []                          # carriages move by the stage controller's keys, pressed with the arm
+    instruments:
+      stage_controller: {tools: [read_controller]}
+      screen_camera: {tools: [capture_screen, arm_sweep, get_capture], evidence: "<episode>:screen:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 560], B: [60, 560], S: [100, 650]}
+      motor_mm_s: 25
+      lens: {aperture_mm: 25}
+      grating: {lines_per_mm: 600}
+      min_gap_mm: 60
+      object: {pattern: F, cell_mm: 4, size_mm: [20, 28]}
+      screen: {size_mm: 120, pixel_mm: 0.5}
+      keys: {axis: [A, B, S], jog_mm: [-10, -1, 1, 10]}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  optics_hand_bench:
+    runtime: optics                       # the hand-slid rail with the laser (grating_wavelength)
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [object, laser]}
+      element_kinds: {type: object}
+      drive: {enum: [hand]}
+    controls: []                          # riders pushed by the robot, the source's POWER button pressed with the arm
+    instruments:
+      bench_view: {tools: [get_observation], evidence: "<episode>:obs:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 590], S: [120, 650]}
+      min_gap_mm: 60
+      rail_friction_N: 3
+      grating: {lines_per_mm: 600}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  optics_hand_lens:
+    runtime: optics                       # the hand-slid rail with the light box and one lens (lens_focal)
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [object]}
+      element_kinds: {type: object}
+      drive: {enum: [hand]}
+    controls: []                          # riders pushed by the robot, the light box's POWER button pressed with the arm
+    instruments:
+      bench_view: {tools: [get_observation], evidence: "<episode>:obs:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 590], S: [120, 650]}
+      min_gap_mm: 60
+      rail_friction_N: 3
+      lens: {aperture_mm: 25}
+      object: {pattern: F}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  optics_hand_plate:
+    runtime: optics                       # the hand-slid rail with three riders and a glass block (plate_index)
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [object]}
+      element_kinds: {type: object}
+      drive: {enum: [hand]}
+    controls: []                          # riders pushed by the robot, the light box's POWER button pressed with the arm
+    instruments:
+      bench_view: {tools: [get_observation], evidence: "<episode>:obs:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 530], B: [120, 590], S: [180, 650]}
+      min_gap_mm: {A_B: 70, B_S: 60}       # index marks at the stops: B's handle arm meets A's bumper at 70 mm
+      rail_friction_N: 3
+      lens: {aperture_mm: 40}
+      plate: {thickness_mm: 60.0}
+      object: {pattern: F}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  optics_hand_slit:
+    runtime: optics                       # the hand-slid rail with the laser and a single slit (slit_width)
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [laser]}
+      element_kinds: {type: object}
+      drive: {enum: [hand]}
+    controls: []                          # riders pushed by the robot, the laser's POWER button pressed with the arm
+    instruments:
+      bench_view: {tools: [get_observation], evidence: "<episode>:obs:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 590], S: [120, 650]}
+      min_gap_mm: 60
+      rail_friction_N: 3
+      laser: {nm: 650.0}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  optics_hand_relay:
+    runtime: optics                       # the hand-slid rail with three riders and two lenses (optical_relay)
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [object]}
+      element_kinds: {type: object}
+      drive: {enum: [hand]}
+    controls: []                          # riders pushed by the robot, the light box's POWER button pressed with the arm
+    instruments:
+      bench_view: {tools: [get_observation], evidence: "<episode>:obs:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 530], B: [120, 590], S: [180, 650]}
+      min_gap_mm: {A_B: 70, B_S: 60}       # index marks at the stops: B's handle arm meets A's bumper at 70 mm
+      rail_friction_N: 3
+      lens: {aperture_mm: 25}
+      object: {pattern: F}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  slit_rail_bench:
+    runtime: optics                       # the optics rail with the laser and a single slit (slit_width)
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [laser]}
+      element_kinds: {type: object}
+    controls: []                          # carriages move by the stage controller's keys, pressed with the arm
+    instruments:
+      stage_controller: {tools: [read_controller]}
+      screen_camera: {tools: [capture_screen, arm_sweep, get_capture], evidence: "<episode>:screen:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 560], B: [60, 560], S: [100, 650]}
+      motor_mm_s: 25
+      laser: {nm: 650.0}
+      min_gap_mm: 60
+      screen: {size_mm: 120, pixel_mm: 0.5}
+      keys: {axis: [A, B, S], jog_mm: [-10, -1, 1, 10]}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  plate_rail_bench:
+    runtime: optics                       # the optics rail with a large lens and a glass plate (plate_index)
+    layout_jitter_supported: false
+    params:
+      lenses: {type: array}
+      lens_axes: {type: array}
+      screen_axis: {enum: [S]}
+      initial_mm: {type: object}
+      lens_seats: {type: object}
+      source: {enum: [object]}
+      element_kinds: {type: object}
+    controls: []                          # carriages move by the stage controller's keys, pressed with the arm
+    instruments:
+      stage_controller: {tools: [read_controller]}
+      screen_camera: {tools: [capture_screen, arm_sweep, get_capture], evidence: "<episode>:screen:<n>"}
+    public_constants:
+      travel_mm: {A: [60, 560], B: [60, 560], S: [100, 650]}
+      motor_mm_s: 25
+      lens: {aperture_mm: 40}
+      plate: {thickness_mm: 60.0, cross_section_mm: 34}
+      min_gap_mm: 60
+      object: {pattern: F, cell_mm: 4, size_mm: [20, 28]}
+      screen: {size_mm: 120, pixel_mm: 0.5}
+      keys: {axis: [A, B, S], jog_mm: [-10, -1, 1, 10]}
+      buttons: {travel_mm: 9, switch_mm: 4}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/dye_absorptivity/submission.json",
+  "title": "dye_absorptivity submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "epsilon_L_per_mol_cm",
+    "lambda_max_nm",
+    "readings",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "epsilon_L_per_mol_cm": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "lambda_max_nm": {
+      "type": "integer",
+      "minimum": 400,
+      "maximum": 700
+    },
+    "readings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 80,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "A",
+          "c_uM"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "evidence_id of the get_observation (this episode) whose images show this reading on the spectrophotometer screen"
+          },
+          "A": {
+            "type": "number"
+          },
+          "c_uM": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "epsilon_L_per_mol_cm": "<epsilon in L/(mol cm), a number>",
+    "lambda_max_nm": "<lambda_max in nm, an integer>",
+    "readings": [
+      {"evidence_id": "<episode_id>:obs:<n>", "A": "<absorbance, a number>", "c_uM": "<concentration in µM, a number>"},
+      {"evidence_id": "<episode_id>:obs:<n>", "A": "<absorbance, a number>", "c_uM": "<concentration in µM, a number>"}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

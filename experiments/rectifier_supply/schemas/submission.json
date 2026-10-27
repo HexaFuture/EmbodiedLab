@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/rectifier_supply/submission.json",
+  "title": "rectifier_supply submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "load_limits",
+    "final_configuration",
+    "final_measurement",
+    "evidence_ids"
+  ],
+  "properties": {
+    "experiment_id": {
+      "const": "rectifier_supply"
+    },
+    "load_limits": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "minimum_load_ohm"
+        ],
+        "properties": {
+          "module_id": {
+            "enum": [
+              "C100",
+              "C220",
+              "C470"
+            ]
+          },
+          "minimum_load_ohm": {
+            "type": "number",
+            "minimum": 150,
+            "maximum": 3300
+          }
+        }
+      }
+    },
+    "final_configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module_id",
+        "load_ohm",
+        "evidence_id"
+      ],
+      "properties": {
+        "module_id": {
+          "enum": [
+            "C100",
+            "C220",
+            "C470"
+          ]
+        },
+        "load_ohm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "final_measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mean_voltage_V",
+        "ripple_pp_V"
+      ],
+      "properties": {
+        "mean_voltage_V": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ripple_pp_V": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    }
+  },
+  "examples": [{
+    "experiment_id": "rectifier_supply",
+    "load_limits": [
+      {"module_id": "C100", "minimum_load_ohm": "<minimum load in ohm, a number>"},
+      {"module_id": "C220", "minimum_load_ohm": "<minimum load in ohm, a number>"},
+      {"module_id": "C470", "minimum_load_ohm": "<minimum load in ohm, a number>"}
+    ],
+    "final_configuration": {"module_id": "<one of C100|C220|C470>", "load_ohm": "<load in ohm, a number>", "evidence_id": "<episode_id>:logger:<n>"},
+    "final_measurement": {"mean_voltage_V": "<mean voltage in V, a number>", "ripple_pp_V": "<peak-to-peak ripple in V, a number>"},
+    "evidence_ids": ["<episode_id>:logger:<n>", "<episode_id>:obs:<n>"]
+  }]
+}

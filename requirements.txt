@@ -1,0 +1,13 @@
+# Host side (Controller, Workers, trial runner, offline evaluator). Installed by ./embodiedlab setup.
+cloudpickle==3.1.2
+fastapi==0.141.1
+httpx==0.28.1
+jsonschema==4.26.0
+numpy==1.26.4
+packaging==26.3
+pillow==12.3.0
+pydantic==2.13.5
+pyyaml==6.0.3
+scipy==1.15.3
+uvicorn==0.53.0
+websockets==16.1.1

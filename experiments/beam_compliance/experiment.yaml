@@ -1,0 +1,47 @@
+id: beam_compliance
+version: 1
+tier: advanced
+kit: mechanics
+title: "Cantilever: beam stiffness versus clamp compliance"
+task_card: task_card.md
+scene:
+  recipe: beam_bench
+  params:
+    weight_seats: {W1: "rack:1", W2: "rack:2", W3: "rack:3"}
+    weights_g: {W1: 50, W2: 100, W3: 100}
+    seats_mm: {"1": 100, "2": 200, "3": 300, "4": 400}
+    holes_mm: [50, 100, 150, 200, 250, 300, 350, 400]
+    carriage_hole_mm: 200
+
+hidden:
+  EI_Nm2: {dist: uniform, low: 3.0, high: 8.0}
+  k_theta_Nm_per_rad: {dist: uniform, low: 80, high: 300}
+  dial_offset_mm: {dist: uniform, low: -0.5, high: 0.5}
+  rail_tilt_mm_per_m: {dist: uniform, low: -1.5, high: 1.5}
+  strip_bow_mm: {dist: uniform, low: -0.3, high: 0.3}
+constraints: []
+
+instruments:
+  - digital_indicator
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 300, wall_s: 14400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: EI_Nm2, unit: "N m^2"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - beam_readings_genuine: {tol_mm: 0.001, hole_tol_mm: 0.3, max_speed_mm_s: 1.0}
+  - bench_in_order
+  - beam_bench_restored: {hole_tol_mm: 0.3, max_speed_mm_s: 1.0}
+scoring:
+  metric: max_rel_error
+  fields: [EI_Nm2, k_theta_Nm_per_rad]
+  target: [EI_Nm2, k_theta_Nm_per_rad]
+  threshold: 0.005
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

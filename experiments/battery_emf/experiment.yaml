@@ -1,0 +1,48 @@
+id: battery_emf
+version: 1
+tier: basic
+kit: circuits
+title: "EMF and internal resistance of a battery"
+task_card: task_card.md
+scene:
+  recipe: circuit_grid_battery
+  params: {}
+
+hidden:
+  E_V: {dist: uniform, low: 1.30, high: 1.60}
+  r_ohm: {dist: uniform, low: 0.5, high: 3.0}
+  load_factor_20: {dist: uniform, low: 0.98, high: 1.02}
+  load_factor_10: {dist: uniform, low: 0.98, high: 1.02}
+  load_factor_5: {dist: uniform, low: 0.98, high: 1.02}
+  load_factor_3: {dist: uniform, low: 0.98, high: 1.02}
+  load_factor_2: {dist: uniform, low: 0.98, high: 1.02}
+  shunt_factor_01: {dist: uniform, low: 0.999, high: 1.001}
+  shunt_factor_05: {dist: uniform, low: 0.999, high: 1.001}
+  shunt_factor_10: {dist: uniform, low: 0.999, high: 1.001}
+constraints: []
+
+instruments:
+  - circuit_grid_logger
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 300, wall_s: 13800, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: r_ohm, unit: "ohm"}
+
+gates:
+  - readings_genuine: {counts: 2, logger_mV: 2}
+  - grid_measurement_valid: {i_min_uA: 1, steady_s: 0.2}
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - circuit_bench_restored
+scoring:
+  metric: max_rel_error
+  target: [E_V, r_ohm]
+  fields: [E_V, r_ohm]
+  threshold: 0.005
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

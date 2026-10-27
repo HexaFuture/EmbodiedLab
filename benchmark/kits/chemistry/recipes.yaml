@@ -1,0 +1,157 @@
+# Chemistry kit: scene recipes that experiment specs may reference.
+# `runtime` names the Bench apparatus family in benchmark/core that builds the recipe
+# (chem_apparatus + chem_backend; chemistry side chem_solver, chem_containers, chem_spectro, chem_bench).
+# `public_constants` are published device facts; the Bench seals the values it
+# actually built into the episode record, and the evaluator uses those.
+kit: chemistry
+recipes:
+  chem_spectro_bench:
+    runtime: chem
+    layout_jitter_supported: true         # benchmark/core/layout.py: rack, dispensing station, spectrophotometer and cuvettes together
+    params:
+      n_cuvettes: {enum: [9]}
+      stock_mL: {type: number}
+      water_mL: {type: number}
+      unknown_mL: {type: number}
+      dye: {enum: [tartrazine, allura_red, crystal_violet, brilliant_blue_fcf, methylene_blue]}
+    controls: []                          # every button and key is pressed with the arm
+    instruments:
+      spectrophotometer: {tools: [], evidence: "<episode>:obs:<n>"}    # READ values: the screen in the camera images
+    public_constants:
+      cuvette: {count: 9, capacity_mL: 3.5, min_read_mL: 2.0, path_cm: 1.0}
+      dispenser: {coarse_mL: 1.0, fine_mL: 0.1, repeatability: 0.003, dispense_s: 1.0}
+      mixer: {mix_s: 3.0}
+      spectrophotometer:
+        wavelength_nm: [400, 700]
+        bandwidth_nm: 2.0
+        noise_sigma_A: "0.001 + 0.002 A"
+        display_decimals: 3
+        measure_s: 2.0
+      buttons: {travel_mm: 9, switch_mm: 4}
+  chem_spectro_scan_bench:
+    runtime: chem                         # the spectro_basic bench (same geometry) with a SCAN key, three stock lines and a mixture cuvette
+    layout_jitter_supported: true
+    params:
+      n_cuvettes: {enum: [9]}
+      stock_x_mL: {type: number}
+      water_mL: {type: number}
+      stock_y_mL: {type: number}
+      mixture_mL: {type: number}
+      mixture_cuvette: {enum: [9]}
+      dye_x: {enum: [tartrazine, allura_red, crystal_violet, brilliant_blue_fcf]}
+      dye_y: {enum: [tartrazine, allura_red, crystal_violet, brilliant_blue_fcf]}
+    controls: []                          # every button and key is pressed with the arm
+    instruments:
+      spectrophotometer: {tools: [export_spectro_scans], evidence: "<episode>:obs:<n>"}    # READ values: the screen
+    public_constants:
+      cuvette: {count: 9, capacity_mL: 3.5, min_read_mL: 2.0, path_cm: 1.0}
+      dispenser: {coarse_mL: 1.0, fine_mL: 0.1, repeatability: 0.003, dispense_s: 1.0}
+      mixer: {mix_s: 3.0}
+      spectrophotometer:
+        wavelength_nm: [400, 700]
+        bandwidth_nm: 2.0
+        noise_sigma_A: "0.001 + 0.002 A"
+        display_decimals: 3
+        measure_s: 2.0
+        scan_nm: [400, 700]
+        scan_step_nm: 1
+        scan_s: 15.0
+      buttons: {travel_mm: 9, switch_mm: 4}
+  chem_spectro_dye_bench:
+    runtime: chem                         # the spectro_basic bench (same geometry) with a SCAN key; two stocks of an unknown dye
+    layout_jitter_supported: true
+    params:
+      n_cuvettes: {enum: [9]}
+      stock1_mL: {type: number}
+      water_mL: {type: number}
+      stock2_mL: {type: number}
+    controls: []                          # every button and key is pressed with the arm
+    instruments:
+      spectrophotometer: {tools: [export_spectro_scans], evidence: "<episode>:obs:<n>"}    # READ values: the screen
+    public_constants:
+      cuvette: {count: 9, capacity_mL: 3.5, min_read_mL: 2.0, path_cm: 1.0}
+      dispenser: {coarse_mL: 1.0, fine_mL: 0.1, repeatability: 0.003, dispense_s: 1.0}
+      mixer: {mix_s: 3.0}
+      spectrophotometer:
+        wavelength_nm: [400, 700]
+        bandwidth_nm: 2.0
+        noise_sigma_A: "0.001 + 0.002 A"
+        display_decimals: 3
+        measure_s: 2.0
+        scan_nm: [400, 700]
+        scan_step_nm: 1
+        scan_s: 15.0
+      buttons: {travel_mm: 9, switch_mm: 4}
+  chem_spectro_kin_bench:
+    runtime: chem                         # the spectro_basic bench (same geometry) with a KIN key; CV stock, water and NaOH lines
+    layout_jitter_supported: true
+    params:
+      n_cuvettes: {enum: [9]}
+      stock_mL: {type: number}
+      water_mL: {type: number}
+      naoh_mL: {type: number}
+      dye: {enum: [crystal_violet]}
+    controls: []
+    instruments:
+      spectrophotometer: {tools: [export_spectro_kinetics], evidence: "<episode>:kinetics:<n>"}
+    public_constants:
+      cuvette: {count: 9, capacity_mL: 3.5, min_read_mL: 2.0, path_cm: 1.0}
+      dispenser: {coarse_mL: 1.0, fine_mL: 0.1, repeatability: 0.003, dispense_s: 1.0}
+      mixer: {mix_s: 3.0}
+      naoh: {label_M: 0.100, certificate_pct: 0.2}
+      spectrophotometer:
+        wavelength_nm: [400, 700]
+        bandwidth_nm: 2.0
+        noise_sigma_A: "0.001 + 0.002 A"
+        display_decimals: 3
+        measure_s: 2.0
+        kin_interval_s: 2.0
+        kin_duration_s: 300.0
+      temperature_C: 25
+      buttons: {travel_mm: 9, switch_mm: 4}
+  chem_titration_khp_bench:
+    runtime: chem                         # the titration_basic bench (same geometry): S1 holds the KHP standard, S2 and S3 the acid
+    layout_jitter_supported: true
+    params:
+      naoh_mL: {type: number}
+      khp_water_mL: {type: number}
+      sample_mL: {type: number}
+    controls: []
+    instruments:
+      titration: {tools: [export_titration_log], evidence: "<episode>:titration:<n>"}
+    public_constants:
+      titrant: {label_M: 0.1, label_text: "about 0.1", volume_mL: 50, large_mL: 1.0, coarse_mL: 0.1, fine_mL: 0.02,
+                large_sigma_mL: 0.003, coarse_sigma_mL: 0.0005, fine_sigma_mL: 0.0002, delivery_s: 0.5,
+                counter_resolution_mL: 0.01}
+      standard: {beaker: S1, substance: "potassium hydrogen phthalate (KHP)", molar_mass_g_per_mol: 204.22, water_mL: 20.0}
+      sample: {volume_mL: 10.0, tolerance_mL: 0.02, beakers: [S2, S3]}
+      beaker: {capacity_mL: 35, min_read_mL: 8}
+      stirrer: {mix_tau_s: 1.0}
+      meter: {resolution_pH: 0.01, noise_pH: 0.005, offset_max_pH: 0.2, slope_min_pct: 97, slope_max_pct: 100,
+              electrode_tau_s: 0.75, settle_s: 3.0, stable_drift_pH_per_s: 0.005}
+      buffers: {low_pH: "4.01", high_pH: "7.00", temperature_C: 25, volume_mL: 20}
+      recorder: {rate_hz: 2}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  chem_titration_bench:
+    runtime: chem                         # same Bench family; the recipe selects the titration apparatus
+    layout_jitter_supported: true
+    params:
+      naoh_mL: {type: number}
+      n_sample_beakers: {enum: [3]}
+      sample_mL: {type: number}
+      sample_acid: {enum: [HCl]}
+    controls: []                          # buttons are pressed and the electrode is moved with the arm (two-finger grasp)
+    instruments:
+      titration: {tools: [export_titration_log], evidence: "<episode>:titration:<n>"}
+    public_constants:
+      titrant: {label_M: 0.1, label_text: "0.1000", certificate_pct: 0.2, volume_mL: 60, large_mL: 1.0, coarse_mL: 0.1, fine_mL: 0.02,
+                large_sigma_mL: 0.003, coarse_sigma_mL: 0.0005, fine_sigma_mL: 0.0002, delivery_s: 0.5,
+                counter_resolution_mL: 0.01}
+      sample: {volume_mL: 10.0, tolerance_mL: 0.02, beakers: [S1, S2, S3]}
+      beaker: {capacity_mL: 35, min_read_mL: 8}
+      stirrer: {mix_tau_s: 1.0}
+      meter: {resolution_pH: 0.01, noise_pH: 0.005, offset_max_pH: 0.2, slope_min_pct: 97, slope_max_pct: 100,
+              electrode_tau_s: 0.75, settle_s: 3.0, stable_drift_pH_per_s: 0.005}
+      buffers: {low_pH: "4.01", high_pH: "7.00", temperature_C: 25, volume_mL: 20}
+      recorder: {rate_hz: 2}
+      buttons: {travel_mm: 9, switch_mm: 4}

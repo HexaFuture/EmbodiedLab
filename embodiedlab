@@ -1,0 +1,300 @@
+#!/usr/bin/env bash
+# EmbodiedLab command line: set up, build, start and stop a local benchmark stack, and run trials.
+# Settings come from embodiedlab.conf next to this script (see the comments there), then from embodiedlab.conf.local
+# (untracked, for your own values); an environment variable overrides both.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+given="$(declare -px | grep -E '^declare -x (EMBODIEDLAB_|SAM3_CHECKPOINT=|PIP_INDEX_URL=)' || true)"
+for conf in "$ROOT/embodiedlab.conf" "$ROOT/embodiedlab.conf.local"; do
+  [[ -f "$conf" ]] && source "$conf"
+done
+eval "$given"
+
+: "${EMBODIEDLAB_DATA:=$ROOT/data}"
+: "${EMBODIEDLAB_IMAGE:=embodiedlab/lab:0.1.0}"
+: "${EMBODIEDLAB_GPUS:=0}"
+: "${EMBODIEDLAB_SLOTS_PER_GPU:=1}"
+: "${EMBODIEDLAB_SERVICES:=on}"
+: "${EMBODIEDLAB_SERVICE_GPU:=0}"
+: "${EMBODIEDLAB_CONTROLLER_PORT:=18731}"
+: "${EMBODIEDLAB_SAM_PORT:=18114}"
+: "${EMBODIEDLAB_CUROBO_PORT:=18768}"
+: "${EMBODIEDLAB_PYTHON:=python3}"
+: "${SAM3_CHECKPOINT:=}"
+: "${CUDA_HOME:=/usr/local/cuda}"
+: "${EMBODIEDLAB_TORCH_INDEX:=https://download.pytorch.org/whl/cu128}"
+: "${EMBODIEDLAB_SAM3_REPO:=https://github.com/facebookresearch/sam3.git}"
+: "${EMBODIEDLAB_CUROBO_REPO:=https://github.com/NVlabs/curobo.git}"
+: "${PIP_INDEX_URL:=}"
+
+[[ -n "$PIP_INDEX_URL" ]] && export PIP_INDEX_URL
+
+SAM3_COMMIT=2ec3c0711a9719ac324388adc662e471f8fe2168
+CUROBO_TAG=v0.7.8
+
+DATA="$(mkdir -p "$EMBODIEDLAB_DATA" && cd "$EMBODIEDLAB_DATA" && pwd)"
+VENV="$ROOT/.venv"
+SVC="$DATA/services"
+RUN="$DATA/run"
+LOGS="$DATA/logs"
+CONTROLLER_URL="http://127.0.0.1:$EMBODIEDLAB_CONTROLLER_PORT"
+SAM_URL="http://127.0.0.1:$EMBODIEDLAB_SAM_PORT"
+CUROBO_URL="http://127.0.0.1:$EMBODIEDLAB_CUROBO_PORT"
+
+export EMBODIEDLAB_DATA="$DATA" EMBODIEDLAB_IMAGE EMBODIEDLAB_CONTROLLER_URL="$CONTROLLER_URL"
+export EMBODIEDLAB_REGISTRY_ROOT="$ROOT" EMBODIEDLAB_INSTANCE_STORE="$DATA/instances"
+export EMBODIEDLAB_SAM_URL="$SAM_URL" EMBODIEDLAB_CUROBO_URL="$CUROBO_URL"
+export EMBODIEDLAB_KIT_CACHE_ROOT="$DATA/kit-cache" EMBODIEDLAB_TRIALS="$DATA/trials"
+
+say() { printf '\033[1m%s\033[0m\n' "$*"; }
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+  cat <<EOF
+usage: ./embodiedlab <command> [arguments]
+
+  setup              check the prerequisites and create the Python environment for the stack (.venv)
+  build              build the lab image $EMBODIEDLAB_IMAGE (Isaac Sim + benchmark benches)
+  install-services   install SAM3 and cuRobo into $SVC (needed for exposure level T1)
+  up                 start the stack: services, Controller, one Worker per GPU slot
+  down               stop every environment of this stack, then the stack itself
+  status             health of the Controller, Workers and services
+  trial ...          run trials: start | prompt | status | viewer | watch | finish | pack | catalog | score (see README.md)
+  logs [name]        list the log files, or follow one (controller, worker-0-0, sam3, curobo)
+EOF
+}
+
+# --- helpers ---------------------------------------------------------------------------------------------------
+running() { [[ -f "$RUN/$1.pid" ]] && kill -0 "$(cat "$RUN/$1.pid")" 2>/dev/null; }
+
+launch() {  # launch NAME COMMAND...  (detached, logs to $LOGS/NAME.log, pid in $RUN/NAME.pid)
+  local name=$1; shift
+  if running "$name"; then echo "  $name already running (pid $(cat "$RUN/$name.pid"))"; return; fi
+  setsid "$@" >>"$LOGS/$name.log" 2>&1 < /dev/null &
+  echo $! > "$RUN/$name.pid"
+  echo "  $name started (pid $!, log $LOGS/$name.log)"
+}
+
+stop() {
+  local name=$1 pid
+  [[ -f "$RUN/$name.pid" ]] || return 0
+  pid=$(cat "$RUN/$name.pid")
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -TERM "$pid" 2>/dev/null || true
+    for _ in $(seq 60); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+    kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null || true
+    echo "  $name stopped"
+  fi
+  rm -f "$RUN/$name.pid"
+}
+
+wait_http() {  # wait_http URL SECONDS [JSON-READY-CHECK]
+  local url=$1 limit=$2 body
+  for _ in $(seq "$limit"); do
+    if body=$(curl -fsS -m 3 "$url" 2>/dev/null); then
+      [[ -z "${3:-}" ]] && return 0
+      grep -q '"status" *: *"ready"' <<<"$body" && return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+clone() {  # clone URL DIR, retried (large repositories over slow links often drop the connection)
+  local i
+  [[ -d "$2/.git" ]] && return 0
+  for i in 1 2 3 4 5; do
+    git clone -q "$1" "$2" && return 0
+    rm -rf "$2"; echo "  clone of $1 failed, retrying ($i/5)"; sleep 10
+  done
+  die "could not clone $1"
+}
+
+need_venv() { [[ -x "$VENV/bin/python" ]] || die "run ./embodiedlab setup first"; }
+services_installed() { [[ -x "$SVC/venv/bin/python" && -f "$SVC/.installed" ]]; }
+gpu_slots() { local g s; for g in ${EMBODIEDLAB_GPUS//,/ }; do for ((s = 0; s < EMBODIEDLAB_SLOTS_PER_GPU; s++)); do echo "$g $s"; done; done; }
+
+# --- commands --------------------------------------------------------------------------------------------------
+cmd_setup() {
+  say "Checking prerequisites"
+  command -v docker >/dev/null || die "docker is not installed"
+  docker info >/dev/null 2>&1 || die "this user cannot talk to the Docker daemon (add it to the docker group)"
+  docker info 2>/dev/null | grep -qi nvidia || echo "  warning: the NVIDIA container runtime is not listed by 'docker info'"
+  command -v nvidia-smi >/dev/null || die "nvidia-smi not found: an NVIDIA driver is required"
+  command -v curl >/dev/null || die "curl is required"
+  "$EMBODIEDLAB_PYTHON" -c 'import sys; assert sys.version_info >= (3, 10)' 2>/dev/null \
+    || die "$EMBODIEDLAB_PYTHON must be Python 3.10 or newer (set EMBODIEDLAB_PYTHON)"
+  "$EMBODIEDLAB_PYTHON" -c 'import ensurepip, venv' 2>/dev/null \
+    || die "$EMBODIEDLAB_PYTHON cannot create virtual environments (Debian/Ubuntu: apt install python3-venv, or set EMBODIEDLAB_PYTHON)"
+  nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader | sed 's/^/  GPU /'
+  say "Creating $VENV"
+  [[ -x "$VENV/bin/python" ]] || "$EMBODIEDLAB_PYTHON" -m venv "$VENV"
+  "$VENV/bin/python" -m pip install -q --upgrade pip
+  "$VENV/bin/python" -m pip install -q -r "$ROOT/requirements.txt"
+  "$VENV/bin/python" -m pip install -q --no-deps -e "$ROOT/sdk"
+  mkdir -p "$RUN" "$LOGS" "$DATA/instances" "$DATA/trials" "$DATA/kit-cache" "$DATA/controller"
+  say "Done. Next: ./embodiedlab build"
+}
+
+cmd_build() {
+  say "Building $EMBODIEDLAB_IMAGE (the Isaac Sim base image is pulled from nvcr.io on first use)"
+  docker build -f "$ROOT/docker/lab/Dockerfile" --build-arg "EMBODIEDLAB_VERSION=${EMBODIEDLAB_IMAGE##*:}" \
+    --build-arg "PIP_INDEX_URL=$PIP_INDEX_URL" \
+    -t "$EMBODIEDLAB_IMAGE" -t "${EMBODIEDLAB_IMAGE%:*}:latest" "$ROOT"
+}
+
+cmd_install_services() {
+  say "Installing SAM3 and cuRobo into $SVC"
+  [[ -x "$CUDA_HOME/bin/nvcc" ]] || die "nvcc not found under CUDA_HOME=$CUDA_HOME (CUDA 12.x toolkit needed to build cuRobo)"
+  mkdir -p "$SVC/src"
+  [[ -x "$SVC/venv/bin/python" ]] || "$EMBODIEDLAB_PYTHON" -m venv "$SVC/venv"
+  local py="$SVC/venv/bin/python"
+  "$py" -m pip install -q --upgrade pip
+  "$py" -m pip install --extra-index-url "$EMBODIEDLAB_TORCH_INDEX" -r "$ROOT/services/requirements.txt"
+  clone "$EMBODIEDLAB_SAM3_REPO" "$SVC/src/sam3"
+  git -C "$SVC/src/sam3" checkout -q "$SAM3_COMMIT"
+  "$py" -m pip install -q --no-deps "$SVC/src/sam3"
+  clone "$EMBODIEDLAB_CUROBO_REPO" "$SVC/src/curobo"
+  git -C "$SVC/src/curobo" checkout -q "$CUROBO_TAG"
+  local arch
+  arch=$(nvidia-smi -i "$EMBODIEDLAB_SERVICE_GPU" --query-gpu=compute_cap --format=csv,noheader | head -1 | tr -d ' ')
+  say "Building cuRobo for compute capability $arch (several minutes)"
+  ( export CUDA_HOME PATH="$CUDA_HOME/bin:$PATH" TORCH_CUDA_ARCH_LIST="$arch" MAX_JOBS="${MAX_JOBS:-8}"
+    # toolkits installed with conda keep the headers and libraries under targets/<arch>/ only
+    local target="$CUDA_HOME/targets/x86_64-linux"
+    if [[ -f "$target/include/cuda_runtime_api.h" && ! -f "$CUDA_HOME/include/cuda_runtime_api.h" ]]; then
+      export CPATH="$target/include${CPATH:+:$CPATH}" LIBRARY_PATH="$target/lib${LIBRARY_PATH:+:$LIBRARY_PATH}"
+    fi
+    "$py" -m pip install -q --no-deps --no-build-isolation -e "$SVC/src/curobo" )
+  "$py" -c 'import sam3, curobo, torch; print("  torch", torch.__version__, "CUDA", torch.cuda.is_available())'
+  touch "$SVC/.installed"
+  if [[ -z "$SAM3_CHECKPOINT" ]]; then
+    echo "  SAM3 weights: request access at https://huggingface.co/facebook/sam3, then run"
+    echo "    $SVC/venv/bin/hf auth login"
+    echo "  (or set SAM3_CHECKPOINT=/path/to/sam3.pt in embodiedlab.conf)"
+  fi
+  say "Done. Next: ./embodiedlab up"
+}
+
+cmd_up() {
+  need_venv
+  mkdir -p "$RUN" "$LOGS" "$DATA/instances" "$DATA/trials" "$DATA/kit-cache" "$DATA/controller"
+  docker image inspect "$EMBODIEDLAB_IMAGE" >/dev/null 2>&1 || die "image $EMBODIEDLAB_IMAGE not found: run ./embodiedlab build"
+  local services="[]"
+  if [[ "$EMBODIEDLAB_SERVICES" == on ]]; then
+    services_installed || die "SAM3/cuRobo are not installed: run ./embodiedlab install-services (or set EMBODIEDLAB_SERVICES=off for T0 only)"
+    say "Starting SAM3 and cuRobo on GPU $EMBODIEDLAB_SERVICE_GPU"
+    local sam_args=(--device cuda --host 127.0.0.1 --port "$EMBODIEDLAB_SAM_PORT")
+    [[ -n "$SAM3_CHECKPOINT" ]] && sam_args+=(--checkpoint "$SAM3_CHECKPOINT")
+    launch sam3 env CUDA_VISIBLE_DEVICES="$EMBODIEDLAB_SERVICE_GPU" HF_HOME="${HF_HOME:-$SVC/hf}" \
+      "$SVC/venv/bin/python" -u "$ROOT/services/sam3_server.py" "${sam_args[@]}"
+    launch curobo env CUDA_VISIBLE_DEVICES="$EMBODIEDLAB_SERVICE_GPU" TORCH_EXTENSIONS_DIR="$SVC/cache/torch" \
+      "$SVC/venv/bin/python" -u "$ROOT/services/curobo_server.py" --host 127.0.0.1 --port "$EMBODIEDLAB_CUROBO_PORT"
+    services="[{\"name\":\"sam3\",\"endpoint\":\"$SAM_URL\",\"health_path\":\"/health\",\"timeout\":5},
+ {\"name\":\"curobo\",\"endpoint\":\"$CUROBO_URL\",\"health_path\":\"/health\",\"timeout\":5}]"
+  fi
+  echo "$services" > "$RUN/services.json"
+  say "Starting the Controller on $CONTROLLER_URL"
+  launch controller "$VENV/bin/embodiedlab-controller" --dev-memory --host 127.0.0.1 \
+    --port "$EMBODIEDLAB_CONTROLLER_PORT" --artifact-dir "$DATA/controller/artifacts" \
+    --external-services-file "$RUN/services.json" --external-services-only
+  wait_http "$CONTROLLER_URL/ready" 60 || die "the Controller did not come up (see $LOGS/controller.log)"
+  say "Starting Workers on GPUs $EMBODIEDLAB_GPUS ($EMBODIEDLAB_SLOTS_PER_GPU per GPU)"
+  local gpu slot name
+  while read -r gpu slot; do
+    name="worker-$gpu-$slot"
+    mkdir -p "$DATA/workers/$name"
+    launch "$name" "$VENV/bin/embodiedlab-worker" --controller-url "$CONTROLLER_URL" --role simulation-worker \
+      --name "embodiedlab-gpu$gpu-slot$slot-$EMBODIEDLAB_CONTROLLER_PORT" \
+      --labels "{\"gpu\":\"$gpu\",\"slot\":\"$slot\"}" --capacity '{"max_environments":1}' \
+      --executor embodiedlab_sdk.executors:executor --workflow-cache-dir "$DATA/workers/$name/workflows" \
+      --tool-bundle-cache-dir "$DATA/workers/$name/tool-bundles" --progress-spool-dir "$DATA/workers/$name/progress"
+  done < <(gpu_slots)
+  if [[ "$EMBODIEDLAB_SERVICES" == on ]]; then
+    say "Waiting for SAM3 and cuRobo to load (first start can take several minutes)"
+    wait_http "$SAM_URL/health" 900 ready || die "SAM3 did not become ready (see $LOGS/sam3.log)"
+    wait_http "$CUROBO_URL/health" 900 ready || die "cuRobo did not become ready (see $LOGS/curobo.log)"
+  fi
+  say "Waiting for the Workers to register"
+  "$VENV/bin/python" - "$CONTROLLER_URL" "$(gpu_slots | wc -l)" <<'EOF' || say "not every Worker is ready yet (see $LOGS/worker-*.log)"
+import sys, time
+from embodiedlab_sdk import EmbodiedLabClient
+with EmbodiedLabClient(sys.argv[1], timeout=30) as client:
+    for _ in range(120):
+        if sum(w.get("state") == "ready" for w in client.request("GET", "/v1/workers")) >= int(sys.argv[2]):
+            sys.exit(0)
+        time.sleep(1)
+sys.exit(1)
+EOF
+  cmd_status
+}
+
+cmd_down() {
+  if [[ -x "$VENV/bin/python" ]] && curl -fsS -m 3 "$CONTROLLER_URL/ready" >/dev/null 2>&1; then
+    say "Stopping environments"
+    "$VENV/bin/python" - "$CONTROLLER_URL" <<'EOF'
+import sys
+from embodiedlab_sdk import EmbodiedLabClient
+with EmbodiedLabClient(sys.argv[1], timeout=60) as client:
+    for env in client.request("GET", "/v1/environments"):
+        if env.get("state") in ("ready", "starting", "running"):
+            try:
+                client.wait_operation(client.environment_command(env["id"], "stop").id, timeout=900)
+                print("  stopped", env["id"])
+            except Exception as exc:
+                print("  could not stop", env["id"], exc)
+EOF
+  fi
+  say "Stopping the stack"
+  local f
+  for f in "$RUN"/worker-*.pid; do [[ -e "$f" ]] && stop "$(basename "$f" .pid)"; done
+  stop controller; stop curobo; stop sam3
+}
+
+cmd_status() {
+  local name
+  for name in controller sam3 curobo $(gpu_slots | awk '{print "worker-"$1"-"$2}'); do
+    if running "$name"; then printf '  %-14s running (pid %s)\n' "$name" "$(cat "$RUN/$name.pid")"
+    else printf '  %-14s not running\n' "$name"; fi
+  done
+  if [[ -x "$VENV/bin/python" ]] && curl -fsS -m 3 "$CONTROLLER_URL/ready" >/dev/null 2>&1; then
+    "$VENV/bin/python" - "$CONTROLLER_URL" <<'EOF'
+import sys
+from embodiedlab_sdk import EmbodiedLabClient
+with EmbodiedLabClient(sys.argv[1], timeout=30) as client:
+    workers = client.request("GET", "/v1/workers")
+    ready = [w for w in workers if w.get("state") == "ready"]
+    print(f"  Controller {sys.argv[1]}: {len(ready)}/{len(workers)} Workers ready")
+    for service in client.request("GET", "/v1/services"):
+        print(f"  service {service.get('name')}: {service.get('state')}")
+    envs = [e for e in client.request("GET", "/v1/environments") if e.get("state") in ("ready", "starting", "running")]
+    print(f"  environments running: {len(envs)}")
+EOF
+  else
+    echo "  Controller $CONTROLLER_URL: not reachable"
+  fi
+}
+
+cmd_logs() {
+  if [[ $# -eq 0 ]]; then ls -1 "$LOGS"; else tail -n 100 -f "$LOGS/$1.log"; fi
+}
+
+cmd_trial() {
+  need_venv
+  exec "$VENV/bin/python" "$ROOT/scripts/trial.py" "$@"
+}
+
+command=${1:-help}; shift || true
+case "$command" in
+  setup) cmd_setup ;;
+  build) cmd_build ;;
+  install-services) cmd_install_services ;;
+  up) cmd_up ;;
+  down) cmd_down ;;
+  status) cmd_status ;;
+  trial) cmd_trial "$@" ;;
+  logs) cmd_logs "$@" ;;
+  help|-h|--help) usage ;;
+  *) usage; exit 2 ;;
+esac

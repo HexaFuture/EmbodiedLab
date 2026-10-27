@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/spectro_mixture/submission.json",
+  "title": "spectro_mixture submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "concentration_X_uM",
+    "concentration_Y_uM",
+    "readings",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "concentration_X_uM": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "concentration_Y_uM": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "readings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 80,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "wavelength_nm",
+          "A",
+          "c_X_from_stock_uM",
+          "c_Y_from_stock_uM"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "evidence_id of the get_observation (this episode) whose images show this reading on the spectrophotometer screen"
+          },
+          "A": {
+            "type": "number"
+          },
+          "wavelength_nm": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 700,
+            "description": "the wavelength of the screen row this absorbance was read in"
+          },
+          "c_X_from_stock_uM": {
+            "type": "number",
+            "minimum": 0
+          },
+          "c_Y_from_stock_uM": {
+            "type": "number",
+            "minimum": 0
+          },
+          "mixture_dilution_factor": {
+            "type": "number",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "concentration_X_uM": "<concentration of X in µM, a number>",
+    "concentration_Y_uM": "<concentration of Y in µM, a number>",
+    "readings": [
+      {"evidence_id": "<episode_id>:obs:<n>", "wavelength_nm": "<wavelength in nm, an integer>", "A": "<absorbance, a number>", "c_X_from_stock_uM": "<X from its stock in µM, a number>", "c_Y_from_stock_uM": "<Y from its stock in µM, a number>"},
+      {"evidence_id": "<episode_id>:obs:<n>", "wavelength_nm": "<wavelength in nm, an integer>", "A": "<absorbance, a number>", "c_X_from_stock_uM": "<X from its stock in µM, a number>", "c_Y_from_stock_uM": "<Y from its stock in µM, a number>", "mixture_dilution_factor": "<dilution factor of the mixture, a number>"}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

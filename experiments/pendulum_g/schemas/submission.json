@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/pendulum_g/submission.json",
+  "title": "pendulum_g submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["g_m_per_s2", "unit", "model", "measurements", "uncertainty_statement"],
+  "properties": {
+    "g_m_per_s2": {"type": "number", "exclusiveMinimum": 0},
+    "unit": {"const": "m/s^2"},
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "measurements": {
+      "type": "array", "minItems": 3, "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pendulum_id", "L_eff_m", "time_s", "cycles", "period_s", "evidence_id"],
+        "properties": {
+          "pendulum_id": {"enum": ["P1", "P2", "P3"]},
+          "L_eff_m": {"type": "number", "exclusiveMinimum": 0},
+          "time_s": {"type": "number", "minimum": 0},
+          "cycles": {"type": "integer", "minimum": 0, "maximum": 99},
+          "period_s": {"type": "number", "exclusiveMinimum": 0},
+          "evidence_id": {"type": "string", "minLength": 1, "maxLength": 200}
+        }
+      }
+    },
+    "plot_path": {"type": "string", "maxLength": 500},
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "g_m_per_s2": "<g in m/s^2, a number>",
+    "unit": "m/s^2",
+    "model": "<the relation you used and how each submitted value follows from the cited readings>",
+    "measurements": [
+      {"pendulum_id": "P1", "L_eff_m": "<L_eff in m, a number>", "time_s": "<time in s, a number>", "cycles": "<number of cycles, an integer>", "period_s": "<period in s, a number>", "evidence_id": "<episode_id>:obs:<n>"},
+      {"pendulum_id": "P2", "L_eff_m": "<L_eff in m, a number>", "time_s": "<time in s, a number>", "cycles": "<number of cycles, an integer>", "period_s": "<period in s, a number>", "evidence_id": "<episode_id>:obs:<n>"},
+      {"pendulum_id": "P3", "L_eff_m": "<L_eff in m, a number>", "time_s": "<time in s, a number>", "cycles": "<number of cycles, an integer>", "period_s": "<period in s, a number>", "evidence_id": "<episode_id>:obs:<n>"}
+    ],
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

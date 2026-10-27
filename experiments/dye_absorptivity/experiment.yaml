@@ -1,0 +1,54 @@
+id: dye_absorptivity
+version: 1
+tier: basic
+kit: chemistry
+title: "Absorption peak and molar absorptivity of an unknown dye"
+task_card: task_card.md
+scene:
+  recipe: chem_spectro_dye_bench
+  params: {n_cuvettes: 9, stock1_mL: 30, water_mL: 60, stock2_mL: 30}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  lambda_draw: {dist: uniform, low: 450, high: 650}
+  lambda_max_nm: {dist: derived, expr: "round(lambda_draw, 1)"}
+  eps_max: {dist: uniform, low: 20000, high: 120000}
+  band_sigma_nm: {dist: uniform, low: 20, high: 35}
+  shoulder: {dist: uniform, low: 0.15, high: 0.35}
+  stock_ratio: {dist: uniform, low: 2.0, high: 3.0}
+  c2_draw: {dist: uniform, low: 100.0, high: 120.0}
+  c_stock2_uM: {dist: derived, expr: "round(c2_draw, 1)", public: true}
+  c_stock1_uM: {dist: derived, expr: "round(c_stock2_uM * stock_ratio, 1)", public: true}
+  b0: {dist: uniform, low: 0.02, high: 0.06}
+  b1: {dist: uniform, low: -0.01, high: 0.01}
+  stray_light: {dist: uniform, low: 0.0001, high: 0.001}
+constraints:
+  - "c_stock2_uM * eps_max * 1e-6 >= 2.0"
+
+instruments:
+  - spectrophotometer
+affordances: [grasp, place, press]
+consumables: {cuvettes: 9, stock1_mL: 30, water_mL: 60, stock2_mL: 30}
+budget: {sim_s: 750, wall_s: 28800, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: epsilon_L_per_mol_cm, unit: "L/(mol cm)"}
+
+gates:
+  - spectro_readings_genuine: {composition_tol: 0.01}
+  - spectro_measurement_valid
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - chem_bench_restored
+scoring:
+  metric: composite
+  target: [eps_max, lambda_max_nm]
+  threshold: 1.0
+  components:
+    - {field: epsilon_L_per_mol_cm, target: eps_max, metric: rel_error, threshold: 0.02}
+    - {field: lambda_max_nm, target: lambda_max_nm, metric: abs_error, threshold: 1}
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

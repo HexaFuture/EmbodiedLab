@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/beam_compliance/submission.json",
+  "title": "beam_compliance submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["EI_Nm2", "k_theta_Nm_per_rad", "readings", "model", "uncertainty_statement"],
+  "properties": {
+    "EI_Nm2": {"type": "number", "exclusiveMinimum": 0},
+    "k_theta_Nm_per_rad": {"type": "number", "exclusiveMinimum": 0},
+    "readings": {
+      "type": "array", "minItems": 1, "maxItems": 200,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["evidence_id", "hole_mm", "reading_mm"],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1, "maxLength": 200},
+          "hole_mm": {"type": "number"},
+          "reading_mm": {"type": "number"}
+        }
+      }
+    },
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "EI_Nm2": "<EI in N m^2, a number>",
+    "k_theta_Nm_per_rad": "<k_theta in N m/rad, a number>",
+    "readings": [
+      {"evidence_id": "<episode_id>:obs:<n>", "hole_mm": "<hole position in mm, a number>", "reading_mm": "<reading in mm, a number>"},
+      {"evidence_id": "<episode_id>:obs:<n>", "hole_mm": "<hole position in mm, a number>", "reading_mm": "<reading in mm, a number>"}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the listed readings>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

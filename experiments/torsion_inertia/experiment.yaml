@@ -1,0 +1,45 @@
+id: torsion_inertia
+version: 1
+tier: basic
+kit: mechanics
+title: "Torsion pendulum: moment of inertia"
+task_card: task_card.md
+scene:
+  recipe: torsion_bench
+  params: {objects: [standard_disc, unknown_object]}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  kappa_Nm_per_rad: {dist: loguniform, low: 0.004, high: 0.08}
+  I0_kgm2: {dist: uniform, low: 0.0010, high: 0.0020}
+  k_unknown: {dist: uniform, low: 0.3, high: 0.9}
+  I_unknown_kgm2: {dist: derived, expr: "k_unknown*0.35*0.040**2"}
+constraints:
+
+  - "2*pi*sqrt(I0_kgm2/kappa_Nm_per_rad) >= 1.0"
+  - "2*pi*sqrt(I0_kgm2/kappa_Nm_per_rad) <= 3.0"
+
+instruments:
+  - torsion_photogate
+affordances: [grasp, place, push, press]
+consumables: {}
+budget: {sim_s: 500, wall_s: 15600, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: I_unknown_kgm2, unit: "kg m^2"}
+
+gates:
+  - measurement_evidence_valid: {instrument: torsion_photogate, min_points: 3, require: [loads_complete, load_matches, period_matches_evidence], period_tol: 0.005}
+  - submission_self_consistent: {refit: torsion_inertia_ratio, tol: 0.01, enforce: false}
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - objects_in_box
+scoring:
+  metric: rel_error
+  target: I_unknown_kgm2
+  threshold: 0.01
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

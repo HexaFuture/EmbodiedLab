@@ -1,0 +1,37 @@
+[
+  {
+    "name": "embodiedlab",
+    "worker_role": "simulation-worker",
+    "runtime": "oci",
+    "network": "host",
+    "gpu_mode": "rtx",
+    "interactive": true,
+    "batch": false,
+    "default_image": "embodiedlab/lab:0.1.0",
+    "ready_timeout": 900,
+    "shm_size": "2g",
+    "environment": {
+      "EMBODIEDLAB_ENV_BOOTSTRAP": "embodiedlab_sdk.robot.embodiedlab.bootstrap:bootstrap",
+      "NVIDIA_DRIVER_CAPABILITIES": "all",
+      "EMBODIEDLAB_BENCH_ISAAC_PYTHON": "/isaac-sim/python.sh"
+    },
+    "environment_from_worker": [
+      "EMBODIEDLAB_SAM_URL",
+      "EMBODIEDLAB_CUROBO_URL"
+    ],
+    "mounts": [
+      {
+        "source_env": "EMBODIEDLAB_INSTANCE_STORE",
+        "target": "/var/lib/embodiedlab/instances",
+        "mode": "readonly"
+      },
+      {
+        "source_env": "EMBODIEDLAB_KIT_CACHE_ROOT",
+        "target": "/isaac-sim/kit/cache",
+        "mode": "readwrite",
+        "per_environment": true,
+        "optional": true
+      }
+    ]
+  }
+]

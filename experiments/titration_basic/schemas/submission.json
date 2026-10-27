@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/titration_basic/submission.json",
+  "title": "titration_basic submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "c_HCl_M",
+    "records",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "c_HCl_M": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 60,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "rows"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "rows": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2000,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "sample_id",
+                "pH",
+                "V_mL"
+              ],
+              "properties": {
+                "sample_id": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "pH": {
+                  "type": "number"
+                },
+                "V_mL": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "c_HCl_M": "<c_HCl in mol/L, a number>",
+    "records": [
+      {"evidence_id": "<episode_id>:titration:<n>", "rows": [{"sample_id": "<sample number, an integer>", "pH": "<pH, a number>", "V_mL": "<volume in mL, a number>"}, {"sample_id": "<sample number, an integer>", "pH": "<pH, a number>", "V_mL": "<volume in mL, a number>"}, {"sample_id": "<sample number, an integer>", "pH": "<pH, a number>", "V_mL": "<volume in mL, a number>"}]}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

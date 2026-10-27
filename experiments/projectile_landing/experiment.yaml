@@ -1,0 +1,26 @@
+id: projectile_landing
+version: 1
+tier: advanced
+kit: mechanics
+title: "Spring launcher: predict the landing point and catch the ball"
+task_card: task_card.md
+scene: {recipe: projectile_bench, params: {}}
+hidden:
+  spring_k: {dist: uniform, low: 40.0, high: 85.0}
+  target_notch_m: {dist: choice, values: [0.030, 0.035, 0.040], public: true}
+constraints: []
+instruments: [flight_recorder]
+affordances: [grasp, place, press, push]
+consumables: {}
+budget: {sim_s: 650, wall_s: 7200, submissions: 1}
+submission:
+  schema: schemas/submission.json
+  primary: {field: predicted_distance_m, unit: m}
+gates: [valid_submission, within_budget, projectile_protocol, {bench_in_order: {ignore_tilt: ['*/ProjectileLab/Ball']}}]
+scoring:
+  metric: sealed_rel_error
+  target: distance_m
+  field: predicted_distance_m
+  threshold: 0.02
+  reward: "G * max(0, 1 - e)"
+hooks: {derive: null, evaluator_extra: null}

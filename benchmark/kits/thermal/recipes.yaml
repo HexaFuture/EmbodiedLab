@@ -1,0 +1,42 @@
+# Thermal kit: scene recipes that experiment specs may reference.
+# `runtime` names the Bench family in benchmark/core (calor_apparatus + calor_backend; calor_bench, calor_model;
+# thermo_* for the dry block; thermal_lcd for the displays).
+# `public_constants` are published device facts.
+kit: thermal
+recipes:
+  calorimeter_bench:
+    runtime: calorimetry
+    layout_jitter_supported: false
+    params: {}
+    controls: []                          # STIR, UP, DN and REC caps, pressed with the arm; every reading on a display
+    instruments:
+      thermometer: {tools: [export_temperature_log], evidence: "<episode>:thermo_rec:<n>"}   # the recorder (REC cap)
+    public_constants:
+      thermometer: {resolution_C: 0.01, noise_C: 0.004, refresh_hz: 1}
+      heater: {set_min_C: 25, set_max_C: 95, set_step_C: 5, start_set_C: 25, resolution_C: 0.1, noise_C: 0.01, heating_K_per_min: 10}
+      water: {c_J_kgK: 4184}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  dry_block_thermistor_bench:
+    runtime: thermo
+    layout_jitter_supported: false
+    params: {kind: thermistor}
+    controls: []                          # UP and DN caps, the ohmmeter's RANGE and AUTO keys, pressed with the arm
+    instruments:
+      meters: {tools: [], evidence: "<episode>:obs:<n>"}   # read on the displays; get_observation's evidence_id
+    public_constants:
+      block: {set_min_C: 25, set_max_C: 80, set_step_C: 5, start_set_C: 25, heating_K_per_min: 10}
+      meters: {thermometer_resolution_C: 0.01, thermometer_noise_C: 0.004, refresh_hz: 1}
+      ohmmeter: {counts: 19999, ranges_ohm: [200, 2000, 20000, 200000], test_current_A: [1.0e-3, 1.0e-3, 1.0e-4, 1.0e-5], noise_rel: 1.0e-4}
+      buttons: {travel_mm: 9, switch_mm: 4}
+  dry_block_rod_bench:
+    runtime: thermo
+    layout_jitter_supported: false
+    params: {kind: rod}
+    controls: []                          # UP and DN caps, pressed with the arm
+    instruments:
+      meters: {tools: [], evidence: "<episode>:obs:<n>"}   # read on the displays; get_observation's evidence_id
+    public_constants:
+      block: {set_min_C: 25, set_max_C: 80, set_step_C: 5, start_set_C: 25, heating_K_per_min: 10}
+      meters: {thermometer_resolution_C: 0.01, thermometer_noise_C: 0.004, indicator_resolution_mm: 0.001, indicator_noise_mm: 0.0003, refresh_hz: 1}
+      rule: {graduation_mm: 1, numbered_every_mm: 10}
+      buttons: {travel_mm: 9, switch_mm: 4}

@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/kinetics_crystal_violet/submission.json",
+  "title": "kinetics_crystal_violet submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_CV",
+    "order_OH",
+    "k",
+    "runs",
+    "derived_from",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "order_CV": {
+      "type": "integer",
+      "description": "m, the reaction order in crystal violet (CV⁺)"
+    },
+    "order_OH": {
+      "type": "integer",
+      "description": "n, the reaction order in hydroxide (OH⁻)"
+    },
+    "k": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "the rate constant k defined by rate = k [CV⁺]^m [OH⁻]^n with m = order_CV and n = order_OH (concentrations in mol/L, time in s); its unit follows from m and n"
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "c_OH_M",
+          "c_CV_uM",
+          "points"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "c_OH_M": {
+            "type": "number",
+            "minimum": 0
+          },
+          "c_CV_uM": {
+            "type": "number",
+            "minimum": 0
+          },
+          "points": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 400,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "point",
+                "A"
+              ],
+              "properties": {
+                "point": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "A": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "derived_from": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order_CV",
+        "order_OH",
+        "k"
+      ],
+      "description": "for each reported quantity, the evidence_id of every cited run it was derived from",
+      "properties": {
+        "order_CV": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "order_OH": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "k": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "order_CV": "<m, an integer>",
+    "order_OH": "<n, an integer>",
+    "k": "<k in the unit that follows from m and n, a number>",
+    "runs": [
+      {"evidence_id": "<episode_id>:kinetics:<run>", "c_OH_M": "<OH⁻ concentration in mol/L, a number>", "c_CV_uM": "<CV⁺ concentration in µM, a number>", "points": [{"point": "<point number, an integer>", "A": "<absorbance, a number>"}, {"point": "<point number, an integer>", "A": "<absorbance, a number>"}, {"point": "<point number, an integer>", "A": "<absorbance, a number>"}]}
+    ],
+    "derived_from": {"order_CV": ["<episode_id>:kinetics:<run>"], "order_OH": ["<episode_id>:kinetics:<run>"], "k": ["<episode_id>:kinetics:<run>"]},
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

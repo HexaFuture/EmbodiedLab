@@ -1,0 +1,41 @@
+# Static and kinetic friction on an incline
+
+**Goal.** Determine the coefficient of static friction μs and the coefficient of kinetic friction μk between each of two sliders, A and B, and the ramp surface: four dimensionless numbers.
+
+**Apparatus.**
+- A tilting ramp: a flat deck between two side guards, turning about a hinge. A motor raises it from 0° to at most {ramp_max_angle_deg}° at {ramp_tilt_rate_deg_s} °/s. A white retractable gate holds a slider back on the deck; a receiving stop catches a slider after a slide. A sensor bridge carries the yellow position sensor. At the start the ramp is level (0°) and the gate is in place.
+- Two sliders, A and B: each a green plate with a magenta square handle on top, {slider_mass_kg} kg in total, its plate top printed "A" or "B". Their undersides are of different materials. Each slider starts on its own loading pad, a white square pad on the table.
+- Push-button console: four coloured push buttons, pressed with the arm. One press of green starts a continuous rise and one press of blue a continuous descent, each running until orange is pressed or the ramp reaches {ramp_max_angle_deg}° or 0°; orange holds the ramp at its present angle; each press of white toggles the gate between out of a slider's way and back in place. There are no tools that set the angle, the gate or a slider.
+- Recorder keypad: a dark console with twelve push keys printed 0 to 9, CLR and REC; REC is red.
+- Recorder display: a dark screen on a post, showing the recorder's state (see Instrument).
+- Gravity g = {gravity_m_s2} m/s².
+
+**Instrument.** A recorder logs the ramp angle ({recorder_angle_resolution_deg}° resolution) and the position of a slider along the ramp ({recorder_position_resolution_m} m resolution; `null` while no slider is on the sensor's track) at {recorder_sample_hz} Hz. The position sensor measures only the slider on its track that is nearest the lower end of the ramp, as an ultrasonic range finder sees only the first object in its beam. It is operated on its keypad: digits enter the record length in whole seconds (at most three digits), CLR clears the entry, and REC takes it: {recorder_record_s_text} s starts a record of that length at once; any other entry shows ERR and does nothing. A record runs its full length and cannot be stopped; while it runs every key is ignored. A record still running when the budget ends is lost. The display shows a state word (IDLE, REC, DONE or ERR) and three numbers: SET S (the entry being typed, or the length of the running record), T S (seconds recorded so far during REC, the record's length at DONE) and NO (the number of the record being made or last made). There is no angle display; the angles are in the records. The recorder display is read only from the camera images (`get_observation`): no tool reports the recorder's state, the record number or the ramp angle while you work, and `export_recording` returns finished records only. Records are numbered 1, 2, … in the order they are made. `export_recording(evidence_id)` returns a finished record: its `evidence_id`, `record_number`, `length_s` and samples (`physics_tick, time_s, angle_deg, position_m`); `evidence_id` may also be the record's number or "latest".
+
+**Acceptance conditions** (the evaluator checks these; how you measure and analyse is up to you):
+- `static_evidence` cites, for each slider, at least one record of this episode in which that slider, free and resting while the ramp was raised by at least 0.2°, then starts to move (see Simulation settings). Each entry gives the record's `evidence_id` and the slider it measured (`"A"` or `"B"`).
+- `kinetic_evidence` cites, for each slider, at least one record of this episode in which that slider, free, slides at least {min_kinetic_travel_m} m. Each entry gives the record's `evidence_id` and the slider it measured.
+- A record may be cited at most once per slider in `static_evidence` and at most once per slider in `kinetic_evidence`.
+- Leave the bench as you found it: when you submit, the ramp is level (0°) and still, the gate is back in place, the recorder is not recording, and each slider lies flat on a loading pad (either pad), not held. Before submitting, lower the ramp to 0°, put the gate back, and put each slider back on a loading pad.
+- Leave the bench in order: when you submit, no loose item (anything not fixed to the apparatus) is tipped over (the direction that pointed up when the episode started now more than 45° from vertical) or off the bench (more than 0.10 m below the table top), and the robot holds nothing.
+- Submit exactly once; the first `submit_result` closes the episode, even if it is invalid.
+
+**Simulation settings** (how this simulation decides; the same at every exposure level):
+- `position_m` is the distance of the measured slider's centre along the deck from the hinge axis, positive downhill. A slider is on the sensor's track while it lies flat on the deck (its centre within 3 mm of the deck height), between −0.60 and +0.14 m along the deck and within 0.105 m of the centre line.
+- A slider counts as free when the robot does not hold or touch it and neither the gate nor the other slider touches it; contact with the deck, the side guards and the receiving stop does not make it unfree.
+- A console button registers when the robot holds its cap at least 5 mm down for 0.04 s; it must come back up before it registers again. A recorder key acts once per press, when its cap is pressed down at least 4 mm (of its 9 mm travel); it acts again only after rising back above 2 mm.
+- A record's first sample is taken in the physics tick in which REC acts; it then has one sample per physics tick for its full length.
+- Static record: the evaluator looks for one unbroken stretch of samples in which the measured slider is free and has a position, and which contains the onset of sliding: the slider rests at the start of the stretch while the angle rises by at least 0.2°, then moves off (more than 1 mm from where it rested) and travels at least 0.02 m. A stretch that begins only after the slider has started to move (for example once it comes away from the gate) does not count.
+- Kinetic record: every free sample after the slider has moved 1 mm counts, whatever the ramp angle and however it changes. Samples taken after the slider has come to rest at the stop still count, up to the end of the recording.
+- Which slider a record belongs to: a stretch of samples belongs to the slider the sensor measured in it, and a stretch ends where the sensor's reading passes from one slider to the other. A cited record counts for the slider named with it only if a stretch of that slider shows the measurement. A record in which stretches of both sliders show the measurement counts for each of them.
+- Leaving the bench as you found it: the ramp counts as level within {ramp_level_deg}° and as still when it turns at most {ramp_still_deg_s}°/s; the gate counts as in place when its last white press put it back and it is fully down; the recorder counts as not recording when its display shows IDLE, DONE or ERR; a slider lies flat on a loading pad when its plate is tilted at most {block_tilt_deg}° from flat, its underside is within {block_gap_m} m of the pad top, and its centre is over the pad.
+- The display, printed labels and deck markings are visual only; the keypad console, keys and the display's post collide.
+
+**Budget.** {sim_s} simulated seconds; every physics tick is charged (observing and exporting records are free). A command that needs more simulated time than remains is refused and nothing moves; once no time remains, a further physical action ends the episode and nothing is accepted after that, not even a submission, so submit before the budget runs out. The wall-clock limit is in README.md. One submission.
+
+**Scoring.** Relative errors e = |μ_submitted − μ| / μ of each of the four coefficients against the true ones: e_sA, e_kA for slider A and e_sB, e_kB for slider B. Success when all conditions hold, e_sA ≤ 5%, e_sB ≤ 5%, e_kA ≤ 0.5% and e_kB ≤ 0.5%. Reward = G × max(0, 1 − max(e_sA / 0.05, e_sB / 0.05, e_kA / 0.005, e_kB / 0.005)).
+
+**Submission** (`submit_result` arguments; JSON schema in `submission_schema`; the `<…>` entries are placeholders, replace them with your own values):
+```json
+{submission_example}
+```

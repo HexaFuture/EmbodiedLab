@@ -1,0 +1,41 @@
+id: pendulum_g
+version: 1
+tier: basic
+kit: mechanics
+title: "Gravitational acceleration with a simple pendulum"
+task_card: task_card.md
+
+scene:
+  recipe: pendulum_bench
+  params: {pendulums: [P1, P2, P3], gate_mode: per_pendulum, g_public: null}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  g_m_per_s2: {dist: loguniform, low: 7.0, high: 13.0}
+constraints: []
+
+instruments:
+  - optical_gate
+affordances: [push]
+consumables: {}
+budget: {sim_s: 200, wall_s: 7800, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: g_m_per_s2, unit: "m/s^2"}
+
+gates:
+  - measurement_evidence_valid: {instrument: timer_display, min_points: 3, distinct: pendulum, require: [shown_done, reading_matches_display, complete, cycles_in_8_10, no_contact_during_timing, excited_by_robot, identity_matches, length_matches, period_matches_evidence], period_tol: 0.005, time_tol: 0.001}
+  - submission_self_consistent: {refit: pendulum_g, tol: 0.02}
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - gate_timers_reset
+scoring:
+  metric: rel_error
+  target: g_m_per_s2
+  threshold: 0.003
+  reward: "G * max(0, 1 - e)"
+  diagnostics: [regression_intercept_s2, zero_intercept_g]
+
+hooks: {derive: null, evaluator_extra: null}

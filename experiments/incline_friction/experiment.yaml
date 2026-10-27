@@ -1,0 +1,47 @@
+id: incline_friction
+version: 1
+tier: basic
+kit: mechanics
+title: "Static and kinetic friction on an incline"
+task_card: task_card.md
+scene:
+  recipe: incline_bench
+  params: {}
+
+hidden:
+  mu_s_A: {dist: loguniform, low: 0.2, high: 0.6}
+  mu_k_over_mu_s_A: {dist: uniform, low: 0.45, high: 0.8}
+  mu_k_A: {dist: derived, expr: "mu_s_A*mu_k_over_mu_s_A"}
+  mu_s_B: {dist: loguniform, low: 0.2, high: 0.6}
+  mu_k_over_mu_s_B: {dist: uniform, low: 0.45, high: 0.8}
+  mu_k_B: {dist: derived, expr: "mu_s_B*mu_k_over_mu_s_B"}
+constraints:
+  - "max(mu_s_A, mu_s_B) >= 1.3 * min(mu_s_A, mu_s_B)"
+
+instruments: [incline_recorder]
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 600, wall_s: 9600, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: mu_s_A, unit: "1"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - incline_records: {min_static_rise_deg: 0.2, min_static_travel_m: 0.02, min_kinetic_travel_m: 0.10, max_kinetic_angle_span_deg: null, min_kinetic_angle_deg: null}
+  - bench_in_order
+  - incline_bench_restored: {ramp_level_deg: 0.1, ramp_still_deg_s: 0.05, block_tilt_deg: 5.0, block_gap_m: 0.003}
+scoring:
+  metric: composite
+  target: [mu_s_A, mu_k_A, mu_s_B, mu_k_B]
+  threshold: 1.0
+  components:
+    - {field: mu_s_A, target: mu_s_A, metric: rel_error, threshold: 0.05}
+    - {field: mu_k_A, target: mu_k_A, metric: rel_error, threshold: 0.005}
+    - {field: mu_s_B, target: mu_s_B, metric: rel_error, threshold: 0.05}
+    - {field: mu_k_B, target: mu_k_B, metric: rel_error, threshold: 0.005}
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

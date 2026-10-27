@@ -1,0 +1,47 @@
+id: rectifier_supply
+version: 1
+tier: advanced
+kit: circuits
+title: "Rectifier power supply: load capability and filter choice"
+task_card: task_card.md
+scene:
+  recipe: circuit_grid_rectifier
+  params: {}
+
+hidden:
+  c100_factor: {dist: uniform, low: 0.9, high: 1.1}
+  c220_factor: {dist: uniform, low: 0.9, high: 1.1}
+  c470_factor: {dist: uniform, low: 0.9, high: 1.1}
+  diode_n: {dist: uniform, low: 1.6, high: 2.0}
+  load_factor_150: {dist: uniform, low: 0.99, high: 1.01}
+  load_factor_330: {dist: uniform, low: 0.99, high: 1.01}
+  load_factor_470: {dist: uniform, low: 0.99, high: 1.01}
+  load_factor_680: {dist: uniform, low: 0.99, high: 1.01}
+  load_factor_820: {dist: uniform, low: 0.99, high: 1.01}
+  load_factor_1k: {dist: uniform, low: 0.99, high: 1.01}
+  load_factor_3k3: {dist: uniform, low: 0.99, high: 1.01}
+constraints: []
+
+instruments:
+  - circuit_grid_logger
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 350, wall_s: 16200, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: load_limits, unit: "ohm"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - rectifier_grid_protocol: {settle_s: 1.0, min_steady_s: 0.2, min_rate_khz: 8}
+  - bench_in_order
+  - circuit_bench_restored
+scoring:
+  metric: max_rel_error
+  target: [c100_factor, c220_factor, c470_factor, diode_n]
+  threshold: 1.0
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}
