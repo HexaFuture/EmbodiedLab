@@ -1,0 +1,55 @@
+id: titration_weak_acid
+version: 1
+tier: advanced
+kit: chemistry
+title: "Weak-acid titration: concentration and pKa"
+task_card: task_card.md
+scene:
+  recipe: chem_titration_khp_bench
+  params: {naoh_mL: 50, khp_water_mL: 20.0, sample_mL: 10}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  acid: {dist: choice, values: [0, 1, 2, 3]}
+  acid_name: {dist: derived, expr: "['formic', 'lactic', 'acetic', 'propanoic'][acid]"}
+  pKa: {dist: derived, expr: "[3.75, 3.86, 4.76, 4.87][acid]"}
+  c_HA_M: {dist: uniform, low: 0.05, high: 0.15}
+  naoh_factor: {dist: uniform, low: 0.95, high: 1.05}
+  c_NaOH_M: {dist: derived, expr: "0.1000 * naoh_factor"}
+  khp_mass_draw: {dist: uniform, low: 0.1500, high: 0.2000}
+  khp_mass_g: {dist: derived, expr: "round(khp_mass_draw, 4)", public: true}
+  V_S2_mL: {dist: uniform, low: 9.98, high: 10.02}
+  V_S3_mL: {dist: uniform, low: 9.98, high: 10.02}
+  ph_offset: {dist: uniform, low: -0.2, high: 0.2}
+  ph_slope_frac: {dist: uniform, low: 0.97, high: 1.0}
+constraints:
+  - "max(V_S2_mL, V_S3_mL) * c_HA_M / c_NaOH_M <= 15.8"
+  - "khp_mass_g / 204.22 / c_NaOH_M * 1000 <= 10.6"
+
+instruments:
+  - titration
+affordances: [grasp, place, press]
+consumables: {naoh_mL: 50, khp_beakers: 1, sample_beakers: 2}
+budget: {sim_s: 850, wall_s: 22200, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: c_HA_M, unit: "M"}
+
+gates:
+  - titration_readings_genuine
+  - titration_measurement_valid
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - chem_bench_restored
+scoring:
+  metric: composite
+  target: [c_HA_M, pKa]
+  threshold: 1.0
+  components:
+    - {field: c_HA_M, target: c_HA_M, metric: rel_error, threshold: 0.01}
+    - {field: pKa, target: pKa, metric: abs_error, threshold: 0.03}
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

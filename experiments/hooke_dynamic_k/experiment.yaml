@@ -1,0 +1,46 @@
+id: hooke_dynamic_k
+version: 1
+tier: basic
+kit: mechanics
+title: "Spring stiffness from oscillations"
+task_card: task_card.md
+scene:
+  recipe: hooke_encoder_bench
+  params: {n_weights: "{hidden.n_weights}", tray_top: open5, encoder: true}
+  layout_jitter: {xy_m: 0.005, yaw_deg: 1.5}
+
+hidden:
+  n_weights: {dist: choice, values: [3, 4, 5], public: true}
+  k_N_per_m: {dist: loguniform, low: 10, high: 50}
+  m_s_kg: {dist: uniform, low: 0.005, high: 0.020}
+  gamma_per_s: {dist: uniform, low: 0.03, high: 0.08}
+constraints:
+
+  - "n_weights*0.050*9.81/k_N_per_m + 0.020 <= 0.15"
+
+instruments:
+  - tray_encoder
+affordances: [grasp, place, press, push]
+consumables: {}
+budget: {sim_s: 500, wall_s: 10800, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: k_N_per_m, unit: "N/m"}
+
+gates:
+  - measurement_evidence_valid: {instrument: tray_encoder, min_points: 3, min_loads: 3, require: [ok_cycles_ge_5, load_matches, distinct_loads, period_matches_evidence], period_tol: 0.01, min_pp_mm: 1.0}
+  - submission_self_consistent: {refit: linear_with_intercept_T2_vs_m, tol: 0.03}
+  - valid_submission
+  - within_budget
+  - weights_in_box
+  - encoder_bench_restored
+  - bench_in_order
+scoring:
+  metric: rel_error
+  target: k_N_per_m
+  threshold: 0.002
+  reward: "G * max(0, 1 - e)"
+  diagnostics: [fit_r2]
+
+hooks: {derive: null, evaluator_extra: null}

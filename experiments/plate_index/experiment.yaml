@@ -1,0 +1,41 @@
+id: plate_index
+version: 1
+tier: basic
+kit: optics
+title: "Refractive index of a glass block"
+task_card: task_card.md
+scene:
+  recipe: optics_hand_plate
+  params: {lenses: [L, P], element_kinds: {L: lens, P: plate}, lens_axes: [A, B], screen_axis: S,
+           initial_mm: {A: 120, B: 205, S: 400}, lens_seats: {L: "carriage:A", P: "stand:1"}, source: object,
+           drive: hand}
+
+hidden:
+  n_P: {dist: uniform, low: 1.45, high: 1.80}
+  f_L_mm: {dist: uniform, low: 70, high: 80}
+  offset_L_mm: {dist: uniform, low: -3, high: 3}
+constraints: []
+
+instruments: [bench_view]
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 500, wall_s: 28800, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: n, unit: "1"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - optics_readings_genuine: {position_tol_mm: 1.0}
+  - optics_measurement_valid: {max_blur_mm: 1.0}
+  - bench_in_order
+  - optics_bench_restored
+scoring:
+  metric: rel_error
+  target: n_P
+  threshold: 0.03
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

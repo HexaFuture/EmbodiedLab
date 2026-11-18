@@ -1,0 +1,53 @@
+id: vibration_absorber
+version: 1
+tier: exploration
+kit: mechanics
+title: "Vibration absorber: tune a dynamic absorber on a shaken cantilever"
+task_card: task_card.md
+scene:
+  recipe: absorber_bench
+  params:
+    weight_seats: {w10: "rack:1", w20: "rack:2", w30: "rack:3", w40: "rack:4"}
+    weights_g: {w10: 10, w20: 20, w30: 30, w40: 40}
+    carrier_mm: 55
+    valve: 0
+
+hidden:
+  E_beam: {dist: uniform, low: 190.0e9, high: 210.0e9}
+  t_factor: {dist: uniform, low: 0.97, high: 1.03}
+  k_theta: {dist: loguniform, low: 200, high: 800}
+  zeta1: {dist: loguniform, low: 0.003, high: 0.010}
+  blade_factor: {dist: uniform, low: 0.80, high: 1.20}
+  c0: {dist: loguniform, low: 0.20, high: 0.80}
+  c_span: {dist: loguniform, low: 15, high: 80}
+  gap_factor: {dist: uniform, low: 0.90, high: 1.10}
+  force_factor: {dist: uniform, low: 0.90, high: 1.10}
+  mass_factor: {dist: uniform, low: 0.95, high: 1.05}
+constraints: []
+
+instruments:
+  - vibration_analyzer
+affordances: [grasp, place, press, push]
+consumables: {}
+budget: {sim_s: 2400, wall_s: 41400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: peak_amplitude_mm, unit: "mm"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - absorber_sweep_genuine
+  - absorber_readings_genuine
+  - absorber_configuration: {mass_tol_g: 0.5}
+  - bench_in_order
+  - absorber_bench_tidy
+scoring:
+  metric: absorber_tuning
+  target: A_star_mm
+  threshold: 0.05
+  reported_threshold: 0.05
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

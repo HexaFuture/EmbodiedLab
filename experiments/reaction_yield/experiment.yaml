@@ -1,0 +1,63 @@
+id: reaction_yield
+version: 1
+tier: exploration
+kit: chemistry
+title: "Reaction yield: the best conditions for an intermediate product"
+task_card: task_card.md
+scene:
+  recipe: reaction_bench
+  params: {n_cuvettes: 9, s_mL: 30, buffer_mL: 60, r_mL: 30, quench_mL: 30}
+
+hidden:
+  k1_ref: {dist: loguniform, low: 25, high: 100}
+  E1: {dist: uniform, low: 65000, high: 85000}
+  T0_C: {dist: uniform, low: 30, high: 70}
+  rho: {dist: loguniform, low: 0.15, high: 0.5}
+  delta: {dist: loguniform, low: 0.05, high: 0.3}
+  gamma: {dist: loguniform, low: 500, high: 5000}
+  dE2: {dist: uniform, low: 40000, high: 70000}
+  dED: {dist: uniform, low: 35000, high: 50000}
+  dEX: {dist: uniform, low: -30000, high: 30000}
+  block_offset_C: {dist: uniform, low: -0.5, high: 0.5}
+  c_S_draw: {dist: uniform, low: 280, high: 320}
+  c_S_uM: {dist: derived, expr: "round(c_S_draw, 1)", public: true}
+  c_R_draw: {dist: uniform, low: 1160, high: 1240}
+  c_R_uM: {dist: derived, expr: "round(c_R_draw, 1)", public: true}
+  c_K_draw: {dist: uniform, low: 48, high: 52}
+  c_K_mM: {dist: derived, expr: "round(c_K_draw, 1)", public: true}
+  c_P_draw: {dist: uniform, low: 90, high: 110}
+  c_P_uM: {dist: derived, expr: "round(c_P_draw, 1)", public: true}
+  eps_S: {dist: uniform, low: 0.95, high: 1.05}
+  eps_P: {dist: uniform, low: 0.95, high: 1.05}
+  eps_Q: {dist: uniform, low: 0.95, high: 1.05}
+  b0: {dist: uniform, low: 0.02, high: 0.06}
+  b1: {dist: uniform, low: -0.01, high: 0.01}
+  stray_light: {dist: uniform, low: 0.0001, high: 0.001}
+constraints: []
+
+instruments:
+  - spectrophotometer
+  - dry_block
+affordances: [grasp, place, press]
+consumables: {cuvettes: 9, s_mL: 30, buffer_mL: 60, r_mL: 30, quench_mL: 30}
+budget: {sim_s: 9000, wall_s: 84000, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: predicted_yield, unit: "1"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - reaction_readings_genuine
+  - reaction_product: {dose_tol_ml: 0.05, s_ml: 1.0}
+  - bench_in_order
+  - chem_bench_restored
+scoring:
+  metric: reaction_yield
+  target: y_star
+  threshold: 0.02
+  predicted_threshold: 0.05
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

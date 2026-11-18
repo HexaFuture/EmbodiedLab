@@ -1,0 +1,44 @@
+id: thermistor_beta
+version: 1
+tier: basic
+kit: thermal
+title: "B constant of a thermistor"
+task_card: task_card.md
+scene:
+  recipe: dry_block_thermistor_bench
+  params: {kind: thermistor}
+
+hidden:
+  B_K: {dist: uniform, low: 3000, high: 4500}
+  R25_ohm: {dist: uniform, low: 5000, high: 20000}
+  tau_probe_s: {dist: uniform, low: 3, high: 8}
+  t_room_C: {dist: uniform, low: 20, high: 24}
+  delta_mW_K: {dist: uniform, low: 2, high: 5}
+  tau_cool_s: {dist: uniform, low: 400, high: 800}
+constraints: []
+
+instruments:
+  - meters
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 1000, wall_s: 15600, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: B_K, unit: "K"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - thermal_readings_genuine
+  - thermal_measurement_valid
+  - bench_in_order
+  - thermal_bench_restored
+scoring:
+  metric: max_rel_error
+  target: [B_K, R25_ohm]
+  fields: [B_K, R25_ohm]
+  threshold: 0.003
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

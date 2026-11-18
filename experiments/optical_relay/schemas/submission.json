@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/optical_relay/submission.json",
+  "title": "optical_relay submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_id", "lens_A_mm", "lens_B_mm", "screen_mm", "magnification_measured", "model",
+               "uncertainty_statement"],
+  "properties": {
+    "evidence_id": {"type": "string", "minLength": 1, "maxLength": 200},
+    "lens_A_mm": {"type": "number"},
+    "lens_B_mm": {"type": "number"},
+    "screen_mm": {"type": "number"},
+    "magnification_measured": {"type": "number"},
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "evidence_id": "<episode_id>:obs:<n>",
+    "lens_A_mm": "<lens A position in mm, a number>",
+    "lens_B_mm": "<lens B position in mm, a number>",
+    "screen_mm": "<screen position in mm, a number>",
+    "magnification_measured": "<measured magnification, a number>",
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

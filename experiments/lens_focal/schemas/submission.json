@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/lens_focal/submission.json",
+  "title": "lens_focal submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["f_mm", "measurements", "model", "uncertainty_statement"],
+  "properties": {
+    "f_mm": {"type": "number", "exclusiveMinimum": 0},
+    "measurements": {
+      "type": "array", "minItems": 1, "maxItems": 60,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["evidence_id", "lens_mm", "screen_mm", "used_in_fit"],
+        "properties": {
+          "evidence_id": {"type": "string", "minLength": 1, "maxLength": 200},
+          "lens_mm": {"type": "number"},
+          "screen_mm": {"type": "number"},
+          "used_in_fit": {"type": "boolean"}
+        }
+      }
+    },
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "f_mm": "<f in mm, a number>",
+    "measurements": [
+      {"evidence_id": "<episode_id>:obs:<n>", "lens_mm": "<lens position in mm, a number>", "screen_mm": "<screen position in mm, a number>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "lens_mm": "<lens position in mm, a number>", "screen_mm": "<screen position in mm, a number>", "used_in_fit": false}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

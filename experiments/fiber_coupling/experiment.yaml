@@ -1,0 +1,42 @@
+id: fiber_coupling
+version: 1
+tier: exploration
+kit: optics
+title: "Fiber coupling: couple a laser into a single-mode fiber"
+task_card: task_card.md
+scene:
+  recipe: fiber_bench
+  params:
+    lens_seats: {lens_1: "box:1", lens_2: "box:2", lens_3: "box:3", lens_4: "box:4", lens_5: "box:5"}
+    cap_seat: "coupler:cap"
+    target_seat: "box:target"
+
+hidden:
+  model_seed: {dist: int_uniform, low: 0, high: 2147483647}
+constraints: []
+
+instruments:
+  - bench_view
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 4500, wall_s: 124200, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: power_uW, unit: "uW"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - fiber_power_evidence: {screw_tol_deg: 0.05}
+  - fiber_installed_as_stated: {f_tol_mm: 0.005}
+  - bench_in_order
+  - fiber_bench_tidy
+scoring:
+  metric: fiber_coupling
+  target: eta_star
+  threshold: 0.05
+  reported_threshold: 0.02
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

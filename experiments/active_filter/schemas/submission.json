@@ -1,0 +1,122 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "embodiedlab/experiments/active_filter/submission.json",
+ "title": "active_filter submission",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "stopband_attenuation_db",
+  "passband_ripple_db",
+  "sweep_evidence",
+  "circuit"
+ ],
+ "properties": {
+  "stopband_attenuation_db": {
+   "type": "number",
+   "minimum": -200,
+   "maximum": 200
+  },
+  "passband_ripple_db": {
+   "type": "number",
+   "minimum": 0,
+   "maximum": 200
+  },
+  "sweep_evidence": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200
+  },
+  "circuit": {
+   "type": "array",
+   "maxItems": 41,
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "block",
+     "pads"
+    ],
+    "properties": {
+     "block": {
+      "enum": [
+       "R3k3_1",
+       "R3k3_2",
+       "R4k7_1",
+       "R4k7_2",
+       "R6k8_1",
+       "R6k8_2",
+       "R10k_1",
+       "R10k_2",
+       "R15k_1",
+       "R15k_2",
+       "R22k_1",
+       "R22k_2",
+       "R33k_1",
+       "R33k_2",
+       "C1n0_1",
+       "C1n0_2",
+       "C2n2_1",
+       "C2n2_2",
+       "C3n3_1",
+       "C3n3_2",
+       "C4n7_1",
+       "C4n7_2",
+       "C10n_1",
+       "C10n_2",
+       "C22n_1",
+       "C22n_2",
+       "C47n_1",
+       "C47n_2",
+       "C100n_1",
+       "C100n_2",
+       "W1",
+       "W2",
+       "W3",
+       "W4",
+       "W5",
+       "W6",
+       "W7",
+       "W8",
+       "PROBE",
+       "OA1",
+       "OA2"
+      ]
+     },
+     "pads": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "items": {
+       "type": "string",
+       "pattern": "^[1-7],[1-6]$"
+      }
+     }
+    }
+   }
+  }
+ },
+ "examples": [
+  {
+   "stopband_attenuation_db": "<gain at 100 Hz minus the highest gain from 2000 Hz to 20000 Hz in your final sweep, dB, a number>",
+   "passband_ripple_db": "<the largest deviation of the gain from its value at 100 Hz over 100 Hz to 1000 Hz in that sweep, dB>",
+   "sweep_evidence": "<episode_id>:sweep:<n>",
+   "circuit": [
+    {
+     "block": "<block id>",
+     "pads": [
+      "<pad 'column,row'>",
+      "<pad>"
+     ]
+    },
+    {
+     "block": "<op-amp module id>",
+     "pads": [
+      "<IN+ pad>",
+      "<IN- pad>",
+      "<OUT pad>"
+     ]
+    }
+   ]
+  }
+ ]
+}

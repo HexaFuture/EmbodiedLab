@@ -1,0 +1,123 @@
+#usda 1.0
+#
+# Layout overlay for the streamed Hooke-law scene.  The original flattened
+# stage remains untouched in the package output; this layer only changes the
+# transforms needed for the tabletop arrangement.
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+)
+
+def Xform "World" (
+    # Enhanced flat scene: weights carry brass grasp handles (post+knob) and
+    # the hanger has a 20 cm tray disc, so the arm can do the whole
+    # experiment with real motions.  Baked by add_handles_to_flat_scene.py.
+    references = @/isaac-sim/documents/hooke_scene_package/outputs/hooke_scene_flat_enhanced.usd@</World>
+)
+{
+    # Apparatus centered toward the rear of the tabletop (negative Y in the
+    # container's camera/world convention).  y=-0.28 keeps the tray within the
+    # Franka's reach (see the Franka note above).
+    over "HookeApparatus"
+    {
+        double3 xformOp:translate = (0.65, -0.28, 0.82)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+
+    # The three weights form an even row in the working lane between Franka
+    # and the spring.  They sit at world y=0.05, just in front of the
+    # apparatus base, and span x=0.75..1.15 so the compact fixed base and arm
+    # do not occlude the row in either agentview.  All three remain on the
+    # tabletop and within the Panda's reachable pick lane.
+    over "Weight50g"
+    {
+            double3 xformOp:translate = (0.10, 0.33, 0.06)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        over "Weight100g"
+        {
+            double3 xformOp:translate = (0.30, 0.33, 0.06)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+        over "Weight200g"
+        {
+            double3 xformOp:translate = (0.50, 0.33, 0.06)
+            uniform token[] xformOpOrder = ["xformOp:translate"]
+        }
+    }
+
+    # Robot is on the opposite side of the tabletop from the stand.  It is
+    # shifted 30 cm to the right to leave a clear front-left presentation lane
+    # for all three weights.  Its local +X still points along -Y, directly
+    # toward the stand.
+    # z=0.90: the Franka root frame runs through the pedestal, so 0.90 puts the
+    # pedestal bottom on the 0.82 tabletop (0.82 would sink it 8 cm into the
+    # table).  y=0.35 gives the arm a little more working room behind the
+    # front weight row; the tray remains about 0.63 m away, inside the Panda's
+    # 0.855 m reach.
+    # 10 cm riser under the robot: shrinks the vertical span the arm must cover,
+    # relaxing BOTH the high tray reach and the close table picks.
+    def Cube "RobotRiser"
+    {
+        double3 xformOp:translate = (0.95, 0.35, 0.87)
+        # Keep the 10 cm elevation needed by the high tray, but use a compact
+        # 32 cm square footprint instead of the oversized 60 cm platform.
+        float3 xformOp:scale = (0.16, 0.16, 0.10)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:scale"]
+        color3f[] primvars:displayColor = [(0.16, 0.16, 0.17)]
+    }
+
+    over "Franka"
+    {
+        double3 xformOp:translate = (0.95, 0.35, 1.00)
+        float3 xformOp:rotateXYZ = (0, 0, -90)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+
+        # Eye-in-hand view.  USD cameras look along -Z, so the 180-degree
+        # rotation about Y points the optical axis along +hand_Z, i.e. toward
+        # the fingertips/grasp workspace (the original RoboCasa quat copied
+        # MuJoCo conventions and aimed the camera into the arm itself).
+        over "panda_hand"
+        {
+            def Camera "robot0_eye_in_hand"
+            {
+                double3 xformOp:translate = (0.05, 0, 0.02)
+                quatd xformOp:orient = (0, 0, 1, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+                float focalLength = 31.2
+                float horizontalAperture = 36
+                float verticalAperture = 36
+                float2 clippingRange = (0.01, 100)
+            }
+        }
+        # RoboCasa agentview cameras are mounted on the robot base (not on a
+        # moving arm link).  Keeping them under the Franka root preserves the
+        # exact PandaOmron local offsets and makes their forward direction move
+        # with any future base transform.
+        def Xform "RoboCasaCameras"
+        {
+            def Camera "robot0_agentview_left"
+            {
+                # RoboCasa local [-0.5, +0.35, 1.05].  This local orientation
+                # targets the spring coil center at local (0.63,-0.24,0.30).
+                double3 xformOp:translate = (-0.50, 0.35, 1.05)
+                quatd xformOp:orient = (-0.449877, -0.257281, 0.424571, 0.742399)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+                float focalLength = 31.2
+                float horizontalAperture = 36
+                float verticalAperture = 36
+                float2 clippingRange = (0.01, 100)
+            }
+            def Camera "robot0_agentview_right"
+            {
+                # RoboCasa local [-0.5, -0.35, 1.05], aimed at the same spring.
+                double3 xformOp:translate = (-0.50, -0.35, 1.05)
+                quatd xformOp:orient = (-0.652204, -0.350819, 0.318327, 0.591798)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient"]
+                float focalLength = 31.2
+                float horizontalAperture = 36
+                float verticalAperture = 36
+                float2 clippingRange = (0.01, 100)
+            }
+        }
+    }
+}

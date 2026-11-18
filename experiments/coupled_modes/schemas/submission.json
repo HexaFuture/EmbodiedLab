@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/coupled_modes/submission.json",
+  "title": "coupled_modes submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["angular_frequencies_rad_per_s", "unit", "model", "measurement_evidence_ids", "uncertainty_statement"],
+  "properties": {
+    "angular_frequencies_rad_per_s": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {"type": "number", "exclusiveMinimum": 0}
+    },
+    "unit": {"const": "rad/s"},
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "measurement_evidence_ids": {
+      "type": "array", "minItems": 1, "maxItems": 20, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 200}
+    },
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000}
+  },
+  "examples": [{
+    "angular_frequencies_rad_per_s": ["<angular frequency in rad/s, a number>", "<angular frequency in rad/s, a number>"],
+    "unit": "rad/s",
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "measurement_evidence_ids": ["<episode_id>:encoder:<n>", "<episode_id>:encoder:<n>"],
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

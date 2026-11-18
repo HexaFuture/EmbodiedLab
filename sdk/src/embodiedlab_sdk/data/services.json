@@ -1,0 +1,16 @@
+[
+  {
+    "name": "sam3",
+    "protocol": "http",
+    "default_port": 18114,
+    "launchability": "external",
+    "description": "SAM3 segmentation (host process started by ./embodiedlab up)"
+  },
+  {
+    "name": "curobo",
+    "protocol": "http",
+    "default_port": 18768,
+    "launchability": "external",
+    "description": "cuRobo collision-free motion planning for the Franka arm (host process started by ./embodiedlab up)"
+  }
+]

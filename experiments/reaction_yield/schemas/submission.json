@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["conditions", "product_cuvette", "predicted_yield", "readings"],
+  "properties": {
+    "conditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["block_set_C", "S_mL", "R_mL", "buffer_mL"],
+      "properties": {
+        "block_set_C": {"type": "integer", "minimum": 20, "maximum": 80},
+        "S_mL": {"type": "number", "minimum": 0, "maximum": 3.5},
+        "R_mL": {"type": "number", "minimum": 0, "maximum": 3.5},
+        "buffer_mL": {"type": "number", "minimum": 0, "maximum": 3.5}
+      }
+    },
+    "product_cuvette": {"type": "integer", "minimum": 1, "maximum": 9},
+    "predicted_yield": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+    "readings": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "cuvette", "wavelength_nm", "A"],
+        "properties": {
+          "evidence_id": {"type": "string"},
+          "cuvette": {"type": "integer", "minimum": 1, "maximum": 9},
+          "wavelength_nm": {"type": "integer", "minimum": 400, "maximum": 700},
+          "A": {"type": "number"}
+        }
+      }
+    }
+  },
+  "examples": [
+    {"conditions": {"block_set_C": "<set point, C>", "S_mL": "<mL>", "R_mL": "<mL>", "buffer_mL": "<mL>"},
+     "product_cuvette": "<cuvette number>", "predicted_yield": "<fraction>",
+     "readings": [{"evidence_id": "<episode_id>:obs:<n>", "cuvette": "<cuvette number>", "wavelength_nm": "<nm>", "A": "<as shown>"}]}
+  ]
+}

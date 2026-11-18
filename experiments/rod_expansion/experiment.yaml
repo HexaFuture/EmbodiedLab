@@ -1,0 +1,45 @@
+id: rod_expansion
+version: 1
+tier: basic
+kit: thermal
+title: "Linear expansion coefficient of a metal rod"
+task_card: task_card.md
+scene:
+  recipe: dry_block_rod_bench
+  params: {kind: rod}
+
+hidden:
+  alpha_per_K: {dist: uniform, low: 9.0e-6, high: 25.0e-6}
+  tau_rod_s: {dist: uniform, low: 15, high: 30}
+  tau_probe_s: {dist: uniform, low: 3, high: 8}
+  indicator_zero_mm: {dist: uniform, low: 0.1, high: 0.9}
+  t_room_C: {dist: uniform, low: 20, high: 24}
+  rod_L0_draw: {dist: uniform, low: 198, high: 202}
+  rod_L0_mm: {dist: derived, expr: "round(rod_L0_draw, 1)"}
+  tau_cool_s: {dist: uniform, low: 400, high: 800}
+constraints: []
+
+instruments:
+  - meters
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 1200, wall_s: 17400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: alpha_per_K, unit: "1/K"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - thermal_readings_genuine
+  - thermal_measurement_valid
+  - bench_in_order
+  - thermal_bench_restored
+scoring:
+  metric: rel_error
+  target: alpha_per_K
+  threshold: 0.005
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}
