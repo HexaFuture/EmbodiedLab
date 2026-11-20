@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/led_planck/submission.json",
+  "title": "led_planck submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "lambda_x_nm",
+    "measurements",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "lambda_x_nm": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "measurements": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 80,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "led",
+          "readings",
+          "used_in_fit"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "led": {
+            "enum": [
+              "L1",
+              "L2",
+              "L3",
+              "L4",
+              "X"
+            ]
+          },
+          "t0_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "t1_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "readings": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "enum": [
+                "V1",
+                "V2",
+                "A",
+                "CH1",
+                "CH2"
+              ]
+            },
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "used_in_fit": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "lambda_x_nm": "<lambda_X in nm, a number>",
+    "measurements": [
+      {"evidence_id": "<episode_id>:obs:<n>", "led": "L1", "readings": {"V1": "<reading in V, a number>", "A": "<reading in A, a number>"}, "used_in_fit": true},
+      {"evidence_id": "<episode_id>:logger:<n>", "led": "X", "t0_s": "<window start in s, a number>", "t1_s": "<window end in s, a number>", "readings": {"CH1": "<reading in V, a number>"}, "used_in_fit": true}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

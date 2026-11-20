@@ -1,0 +1,52 @@
+id: coupled_modes
+version: 1
+tier: basic
+kit: mechanics
+title: "Coupled oscillators: the two normal-mode frequencies"
+task_card: task_card.md
+
+scene:
+  recipe: coupled_bench
+  params: {logger_arms: null}
+
+hidden:
+  omega_a: {dist: uniform, low: 3.0, high: 4.8}
+  identical: {dist: choice, values: [true, false]}
+  delta_b: {dist: uniform, low: 0.35, high: 0.9}
+  sign_b: {dist: choice, values: [-1, 1]}
+  omega_b: {dist: derived, expr: "omega_a if identical else omega_a + sign_b*delta_b"}
+  c_per_s2: {dist: uniform, low: 0.25, high: 1.15}
+  gamma_per_s: {dist: uniform, low: 0.035, high: 0.095}
+  omega_1: {dist: derived, expr: "mode_freqs(omega_a, omega_b, c_per_s2)[0]"}
+  omega_2: {dist: derived, expr: "mode_freqs(omega_a, omega_b, c_per_s2)[1]"}
+constraints:
+  - "omega_2 - omega_1 >= 0.15"
+  - "omega_b >= 2.5"
+  - "omega_b <= 5.3"
+
+instruments:
+  - coupled_recorder
+affordances: [grip_and_translate, pull_release, push, press]
+consumables: {}
+budget: {sim_s: 300, wall_s: 15000, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: angular_frequencies_rad_per_s, unit: "rad/s"}
+
+gates:
+  - independent_excitation: {min_abs_det: 0.3, min_minor_pp_mm: 0.5}
+  - measurement_evidence_valid: {instrument: coupled_recorder, min_points: 1, require: [complete, clean_segment_s_ge_40]}
+  - valid_submission: {ascending: [angular_frequencies_rad_per_s]}
+  - within_budget
+  - bench_in_order
+  - coupled_bench_restored: {position_tol_mm: 2.0, max_speed_mm_s: 5.0}
+scoring:
+  metric: max_rel_error
+  target: [omega_1, omega_2]
+  field: angular_frequencies_rad_per_s
+  threshold: 0.002
+  reward: "G * max(0, 1 - e)"
+  diagnostics: [mode_relative_errors]
+
+hooks: {derive: null, evaluator_extra: null}

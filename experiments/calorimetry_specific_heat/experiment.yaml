@@ -1,0 +1,51 @@
+id: calorimetry_specific_heat
+version: 1
+tier: advanced
+kit: thermal
+title: "Specific heat of a metal by the method of mixtures"
+task_card: task_card.md
+scene:
+  recipe: calorimeter_bench
+  params: {}
+
+hidden:
+  m_s_draw: {dist: uniform, low: 80, high: 150}
+  m_s_g: {dist: derived, expr: "round(m_s_draw, 2)", public: true}
+  c_s_J_kgK: {dist: uniform, low: 380, high: 900}
+  m_w_draw: {dist: uniform, low: 190, high: 230}
+  m_w_g: {dist: derived, expr: "round(m_w_draw, 1)", public: true}
+  c_cup_draw: {dist: uniform, low: 15, high: 30}
+  c_cup_J_K: {dist: derived, expr: "round(c_cup_draw, 1)", public: true}
+  t_room_draw: {dist: uniform, low: 20, high: 25}
+  t_room_C: {dist: derived, expr: "round(t_room_draw, 1)", public: true}
+  water_below_room_K: {dist: uniform, low: 0.5, high: 2.5}
+  h_air_W_K: {dist: uniform, low: 0.003, high: 0.006}
+  k_loss_W_K: {dist: uniform, low: 0.05, high: 0.25}
+  tau_sample_s: {dist: uniform, low: 60, high: 120}
+  tau_cool_s: {dist: uniform, low: 400, high: 800}
+constraints: []
+
+instruments:
+  - thermometer
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 1400, wall_s: 15600, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: c_s_J_kgK, unit: "J/(kg K)"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - thermal_readings_genuine
+  - thermal_measurement_valid
+  - bench_in_order
+  - thermal_bench_restored
+scoring:
+  metric: rel_error
+  target: c_s_J_kgK
+  threshold: 0.01
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

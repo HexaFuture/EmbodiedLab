@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["mass_B_kg", "unit", "measurements", "model", "uncertainty_statement"],
+  "properties": {
+    "mass_B_kg": {"type": "number", "exclusiveMinimum": 0},
+    "unit": {"const": "kg"},
+    "model": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "uncertainty_statement": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "measurements": {"type": "array", "minItems": 1, "maxItems": 12, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidence_id", "v_A_before_m_s", "v_A_after_m_s", "v_B_after_m_s"],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "v_A_before_m_s": {"type": "number", "exclusiveMinimum": 0},
+        "v_A_after_m_s": {"type": "number"},
+        "v_B_after_m_s": {"type": "number", "exclusiveMinimum": 0}
+      }
+    }}
+  }
+}

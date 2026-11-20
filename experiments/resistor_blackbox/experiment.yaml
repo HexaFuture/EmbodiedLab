@@ -1,0 +1,42 @@
+id: resistor_blackbox
+version: 1
+tier: basic
+kit: circuits
+title: "An unknown resistance in a black box"
+task_card: task_card.md
+scene:
+  recipe: circuit_grid_bench
+  params: {}
+
+hidden:
+  R_ohm: {dist: loguniform, low: 1.0e3, high: 100.0e3}
+  rs_factor_1k: {dist: uniform, low: 0.999, high: 1.001}
+  rs_factor_10k: {dist: uniform, low: 0.999, high: 1.001}
+  rs_factor_100k: {dist: uniform, low: 0.999, high: 1.001}
+  supply_factor: {dist: uniform, low: 0.99, high: 1.01}
+constraints: []
+
+instruments:
+  - circuit_grid_logger
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 300, wall_s: 14400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: R_ohm, unit: "ohm"}
+
+gates:
+  - readings_genuine: {counts: 2, logger_mV: 2}
+  - measurement_valid: {i_min_uA: 1, steady_s: 0.2}
+  - valid_submission
+  - within_budget
+  - bench_in_order
+  - circuit_bench_restored
+scoring:
+  metric: rel_error
+  target: R_ohm
+  threshold: 0.003
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

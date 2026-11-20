@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/truss_bridge/submission.json",
+  "title": "truss_bridge submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [],
+  "properties": {
+    "design": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "not": {"pattern": "^<[^>]*>$"}
+    },
+    "analysis": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "not": {"pattern": "^<[^>]*>$"}
+    }
+  },
+  "examples": [
+    {
+      "design": "<which holes hold pins and which bars connect which pins of your bridge>",
+      "analysis": "<what you measured and how you expected the bridge to fail>"
+    }
+  ]
+}

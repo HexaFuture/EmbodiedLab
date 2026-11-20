@@ -1,0 +1,9 @@
+*
+!docker/lab/requirements.txt
+!assets/
+!sdk/src/embodiedlab_sdk/
+!benchmark/core/
+**/__pycache__
+**/*.bak*
+**/*.orig
+**/*.pyc

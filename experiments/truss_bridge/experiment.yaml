@@ -1,0 +1,57 @@
+id: truss_bridge
+version: 2
+tier: exploration
+kit: mechanics
+title: "Truss bridge: design, build and load the strongest bridge on a pegboard"
+task_card: task_card.md
+scene:
+  recipe: truss_bench
+  params:
+    carriage_label: 100
+    mode: tension
+
+hidden:
+  T_blue_N: {dist: uniform, low: 40, high: 200}
+  T_orange_N: {dist: uniform, low: 40, high: 200}
+  T_green_N: {dist: uniform, low: 40, high: 200}
+  T_white_N: {dist: uniform, low: 40, high: 200}
+  P100_blue_N: {dist: uniform, low: 40, high: 300}
+  P100_orange_N: {dist: uniform, low: 40, high: 300}
+  P100_green_N: {dist: uniform, low: 40, high: 300}
+  P100_white_N: {dist: uniform, low: 40, high: 300}
+  N_blue_N: {dist: uniform, low: 60, high: 300}
+  N_orange_N: {dist: uniform, low: 60, high: 300}
+  N_green_N: {dist: uniform, low: 60, high: 300}
+  N_white_N: {dist: uniform, low: 60, high: 300}
+constraints:
+  - "max(abs(log(T_blue_N / T_orange_N)), abs(log(P100_blue_N / P100_orange_N)), abs(log(N_blue_N / N_orange_N))) >= log(1.3)"
+  - "max(abs(log(T_blue_N / T_green_N)), abs(log(P100_blue_N / P100_green_N)), abs(log(N_blue_N / N_green_N))) >= log(1.3)"
+  - "max(abs(log(T_blue_N / T_white_N)), abs(log(P100_blue_N / P100_white_N)), abs(log(N_blue_N / N_white_N))) >= log(1.3)"
+  - "max(abs(log(T_orange_N / T_green_N)), abs(log(P100_orange_N / P100_green_N)), abs(log(N_orange_N / N_green_N))) >= log(1.3)"
+  - "max(abs(log(T_orange_N / T_white_N)), abs(log(P100_orange_N / P100_white_N)), abs(log(N_orange_N / N_white_N))) >= log(1.3)"
+  - "max(abs(log(T_green_N / T_white_N)), abs(log(P100_green_N / P100_white_N)), abs(log(N_green_N / N_white_N))) >= log(1.3)"
+
+instruments:
+  - bar_tester
+affordances: [grasp, place, press, push]
+consumables: {}
+budget: {sim_s: 2900, wall_s: 228600, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: design, unit: "text"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - truss_mass_limit: {mass_limit_g: 50}
+  - bench_in_order: {exempt: ["*/ChemApparatus/Weights/*"]}
+  - truss_bench_tidy
+  - truss_hands_off
+scoring:
+  metric: truss_design
+  target: P_star_N
+  threshold: 0.10
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/rod_expansion/submission.json",
+  "title": "rod_expansion submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "alpha_per_K",
+    "L0_mm",
+    "points",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "alpha_per_K": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "L0_mm": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "points": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "T_C",
+          "indicator_mm",
+          "used_in_fit"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "T_C": {
+            "type": "number"
+          },
+          "indicator_mm": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "used_in_fit": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "alpha_per_K": "<alpha in 1/K, a number>",
+    "L0_mm": "<L0 in mm, a number>",
+    "points": [
+      {"evidence_id": "<episode_id>:obs:<n>", "T_C": "<temperature in °C, a number>", "indicator_mm": "<indicator reading in mm, a number>", "method": "<how you read this value in the cited observation>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "T_C": "<temperature in °C, a number>", "indicator_mm": "<indicator reading in mm, a number>", "used_in_fit": true}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

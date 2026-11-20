@@ -1,0 +1,40 @@
+id: grating_wavelength
+version: 1
+tier: basic
+kit: optics
+title: "Laser wavelength with a diffraction grating"
+task_card: task_card.md
+scene:
+  recipe: optics_hand_bench
+  params: {lenses: [G], element_kinds: {G: grating}, lens_axes: [A], screen_axis: S, initial_mm: {A: 200, S: 400},
+           lens_seats: {G: "carriage:A"}, source: laser, drive: hand}
+
+hidden:
+  laser_nm: {dist: uniform, low: 520, high: 660}
+  offset_G_mm: {dist: uniform, low: -2, high: 2}
+constraints: []
+
+instruments:
+  - bench_view
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 200, wall_s: 14400, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: lambda_nm, unit: "nm"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - optics_readings_genuine: {position_tol_mm: 1.0, spot_tol_mm: 0.5}
+  - optics_measurement_valid
+  - bench_in_order
+  - optics_bench_restored
+scoring:
+  metric: rel_error
+  target: laser_nm
+  threshold: 0.01
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}

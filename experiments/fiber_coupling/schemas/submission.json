@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/fiber_coupling/submission.json",
+  "title": "fiber_coupling submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["power_uW", "power_evidence", "lens"],
+  "properties": {
+    "power_uW": {"type": "number", "minimum": 0, "maximum": 10000},
+    "power_evidence": {"type": "string", "minLength": 1, "maxLength": 200},
+    "lens": {"type": "number", "exclusiveMinimum": 0, "maximum": 100}
+  },
+  "examples": [{
+    "power_uW": "<the power meter's reading in your final observation, in µW, a number>",
+    "power_evidence": "<episode_id>:obs:<n>",
+    "lens": "<the focal length printed on the cartridge in the coupler, in mm, a number>"
+  }]
+}

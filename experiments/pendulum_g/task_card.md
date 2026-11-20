@@ -1,0 +1,29 @@
+# Gravitational acceleration from three pendulums
+
+**Goal.** Determine the local gravitational acceleration g (m/s^2).
+
+**Apparatus.** A frame carries three rigid pendulums with published effective lengths L_eff in metres ({effective_lengths_m_text}). Each pendulum has its own optical gate and timer with the same label. There is no tool on this bench: only the robot itself can set a pendulum swinging. The fingers have no contact hold (anything between them is held by friction only) and `device_calibration` has no `gripper_mechanism`; `get_robot_state` reports the joints and the gripper width, not `gripper_holding`. The frame, angle plate and supports are fixed. P1 is the shortest pendulum, P2 the middle one and P3 the longest. Each timer has a deck with its P label, `L` (the nominal rod length, which is not L_eff) and two push buttons, a green START and a red RESET, each named on the deck.
+
+**Instrument.** Each gate's timer is operated by its two buttons: START on an idle gate starts an acquisition, which times {gate_cycles} complete cycles after {warmup_cycles} warm-up cycle; RESET returns the gate to idle. No tool reads or exports a timer (there is no `export_gate`): its face is read in the camera images. The face shows, on its top line, the P label and `L = x.xxx M` (the nominal rod length, not L_eff); under `TIME S` a five-digit readout `xx.xxx` in seconds (1 ms resolution; the gate samples its beam on every physics tick, 240 per simulated second, and adds no noise); under `CYCLES` two digits, the timed cycles completed; and one state word: `IDLE` (no acquisition: never started, or after RESET), `ARM` (START has taken effect: waiting for the first crossing, then through the warm-up cycle), `RUN` (timing), `DONE` (complete; TIME is then the total for the {gate_cycles} cycles) or `ERR` (the timing itself failed, by the timer rules under Simulation settings; the TIME and CYCLES digits show dashes). The face is redrawn 30 times per simulated second. A finished acquisition (`DONE` or `ERR`) stays on the face until RESET, which returns it to `IDLE`, `00.000` and `00`. The face does not judge the contact or beam-crossing conditions of the acceptance: a `DONE` acquisition can still fail them. Each gate's beam crosses its rod at the rod's rest position. The P labels name the pendulums in `get_task_spec().apparatus.instrument_labels` and in the submission. Every `get_observation` returns an `evidence_id` (`<episode_id>:obs:<n>`) bound to the state its images show.
+
+**Acceptance conditions** (the evaluator checks these; order and method are up to you):
+- At least one measurement of each pendulum, P1, P2 and P3 (the same pendulum may be measured more than once). Each cites the observation it was read from (`evidence_id`, an observation of this episode), in which that pendulum's timer shows `DONE`; `time_s` and `cycles` are the TIME and CYCLES that timer shows there, to the last digit. The acquisition shown must be a complete timing of {gate_cycles} cycles of a swing started by the robot (contact by any part of the robot counts: fingers or arm), with no contact with the pendulum during timing. `L_eff_m` is the published value of that pendulum and `period_s` follows from `time_s` and `cycles`.
+- The evaluator refits your (L_eff, T) pairs with the standard physical model of this measurement; your submitted g must agree with that refit within {self_consistency_pct}%.
+- Leave the bench in order: when you submit, no loose item (anything not fixed to the apparatus) is tipped over (the direction that pointed up when the episode started now more than 45° from vertical) or off the bench (more than 0.10 m below the table top), and the robot holds nothing.
+- Tidy up: when you submit, every gate timer is reset (state word `IDLE`, TIME `00.000`, CYCLES `00`).
+- Submit exactly once; the first `submit_result` closes the episode, even if it is invalid.
+
+**Simulation settings** (how this simulation decides; the same at every exposure level):
+- A button is pressed when its cap is pushed 4 mm down (its travel is 9 mm; the spring needs about 2 N there); it must rise back above 2 mm before it can be pressed again. START has no effect unless the gate is idle. RESET works at any time: it ends a running acquisition unfinished, returns the gate to idle and clears the face to `IDLE`, `00.000` and `00`, so the acquisition it cleared is no longer shown.
+- The timing fails (`ERR`) when no crossing comes within 6 s, the beam stays blocked longer than 0.25 s (so a gate started while its pendulum hangs still or is held fails within 0.25 s), or the crossing intervals fall outside 0.30–0.90 s or differ by more than 25%.
+- Contact during the warm-up cycle is allowed; any contact with the pendulum from the first timed crossing on invalidates the timing. Anything other than the pendulum's rod that crosses a gate's beam after the START press (fingers, arm) invalidates that gate, warm-up included.
+- The submitted `L_eff_m` must equal the published value within 0.0001 m, and `period_s` must be within 0.5% of `time_s` divided by `cycles`.
+
+**Budget.** {sim_s} simulated seconds; every physics tick is charged (observing is free). A command that needs more simulated time than remains is refused and nothing moves; once no time remains, a further physical action ends the episode and nothing is accepted after that, not even a submission, so submit before the budget runs out. The wall-clock limit is in README.md. One submission.
+
+**Scoring.** Relative error e_rel = |g_submitted − g| / g. Success when all conditions hold and e_rel ≤ {threshold_pct}%. Reward = G × max(0, 1 − e_rel / {threshold}).
+
+**Submission** (`submit_result` arguments; JSON schema in `submission_schema`; the `<…>` entries are placeholders, replace them with your own values):
+```json
+{submission_example}
+```

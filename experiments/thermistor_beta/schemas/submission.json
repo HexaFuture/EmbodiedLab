@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "embodiedlab/experiments/thermistor_beta/submission.json",
+  "title": "thermistor_beta submission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "B_K",
+    "R25_ohm",
+    "points",
+    "model",
+    "uncertainty_statement"
+  ],
+  "properties": {
+    "B_K": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "R25_ohm": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "points": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "T_C",
+          "R_ohm",
+          "used_in_fit"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "T_C": {
+            "type": "number"
+          },
+          "R_ohm": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "used_in_fit": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "uncertainty_statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    }
+  },
+  "examples": [{
+    "B_K": "<B in K, a number>",
+    "R25_ohm": "<R25 in ohm, a number>",
+    "points": [
+      {"evidence_id": "<episode_id>:obs:<n>", "T_C": "<temperature in °C, a number>", "R_ohm": "<resistance in ohm, a number>", "method": "<how you read this value in the cited observation>", "used_in_fit": true},
+      {"evidence_id": "<episode_id>:obs:<n>", "T_C": "<temperature in °C, a number>", "R_ohm": "<resistance in ohm, a number>", "used_in_fit": true}
+    ],
+    "model": "<the relation you used and how each submitted value follows from the cited evidence>",
+    "uncertainty_statement": "<your uncertainty estimate and its main contributions>"
+  }]
+}

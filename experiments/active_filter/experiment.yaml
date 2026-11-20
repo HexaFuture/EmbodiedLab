@@ -1,0 +1,40 @@
+id: active_filter
+version: 1
+tier: exploration
+kit: circuits
+title: "Active filter: the steepest low-pass the kit allows"
+task_card: task_card.md
+scene:
+  recipe: circuit_grid_filter
+  params: {}
+
+hidden:
+  model_seed: {dist: int_uniform, low: 0, high: 2147483647}
+constraints: []
+
+instruments:
+  - frequency_analyzer
+affordances: [grasp, place, press]
+consumables: {}
+budget: {sim_s: 1900, wall_s: 45000, submissions: 1}
+
+submission:
+  schema: schemas/submission.json
+  primary: {field: stopband_attenuation_db, unit: "dB"}
+
+gates:
+  - valid_submission
+  - within_budget
+  - filter_sweep_genuine
+  - filter_circuit_as_stated
+  - filter_passband: {ripple_db: 0.5}
+  - bench_in_order
+  - filter_bench_tidy
+scoring:
+  metric: filter_design
+  target: A_ref_db
+  threshold: 1.0
+  reported_threshold: 0.3
+  reward: "G * max(0, 1 - e)"
+
+hooks: {derive: null, evaluator_extra: null}
